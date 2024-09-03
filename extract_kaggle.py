@@ -19,14 +19,14 @@ logging.info('KaggleApi Authenticate SUCCESS')
 
 s3 = boto3.client('s3', region_name='ap-northeast-2')
 bucket_name = os.environ['BUCKET_NAME']
-# bucket_name = 'middle-dataset'
 
-# dataset = 'haseebindata/student-performance-predictions'
 dataset = os.environ['DATASET']
 files = kaggle_api.dataset_list_files(dataset).files
 
 # 파일 다운
-for file in files:
+logging.info(f"Total {len(files)} files")
+for i, file in enumerate(files):
+    logging.info(f"NOW {i+1}/{len(files)} file")
     file_name = file.name
     kaggle_api.dataset_download_file(dataset, file_name)
     logging.info(f"Uploading {file_name} to S3...")

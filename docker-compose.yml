@@ -1,8 +1,10 @@
 services:
     extract:
-        image: extract # 이미지 이름 (Dockerfile을 빌드할 때 사용한 이름)
+        build: .
         environment:
             - KAGGLE_USERNAME=${KAGGLE_USERNAME}
             - KAGGLE_KEY=${KAGGLE_KEY}
             - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
             - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+            - BUCKET_NAME=middle-dataset
+            - DATASET=haseebindata/student-performance-predictions

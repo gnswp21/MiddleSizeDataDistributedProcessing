@@ -42,14 +42,15 @@ for i, file in enumerate(files):
         files = os.listdir()
         
         if file_name in files:
-            logging.info(f"파일 '{file_name}'이(가) 발견되었습니다.")
+            logging.info(f"{file_name} is Found ")
             break
     
         # 1분(60초) 대기
         time.sleep(60)
         elapsed_time += 60
+        logging.info(f" sleeping {elapsed_time} sec ...")
         if elapsed_time >= max_wait_time:
-            logging.info(f"파일 '{filename}'이(가) 30분 내에 생성되지 않았습니다.")
+            logging.info(f" {file_name} is NOT Found until limit")
             break
             
     

@@ -1,6 +1,8 @@
 import boto3
 import logging
 import os
+import time
+
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 ###
@@ -23,14 +25,36 @@ bucket_name = os.environ['BUCKET_NAME']
 dataset = os.environ['DATASET']
 files = kaggle_api.dataset_list_files(dataset).files
 
+
 # 파일 다운
 logging.info(f"Total {len(files)} files")
 for i, file in enumerate(files):
+    
     logging.info(f"NOW {i+1}/{len(files)} file")
     file_name = file.name
-    kaggle_api.dataset_download_file(dataset, file_name)
+    kaggle_api.dataset_download_file(dataset=dataset,
+                                     file_name=file_name)
+    # 파일이 생성될 때까지 대기
+    elapsed_time = 0
+    max_wait_time = 1800
+    while elapsed_time < max_wait_time:
+        # 현재 디렉토리의 파일 목록 가져오기
+        files = os.listdir()
+        
+        if file_name in files:
+            logging.info(f"파일 '{file_name}'이(가) 발견되었습니다.")
+            break
+    
+        # 1분(60초) 대기
+        time.sleep(60)
+        elapsed_time += 60
+        if elapsed_time >= max_wait_time:
+            logging.info(f"파일 '{filename}'이(가) 30분 내에 생성되지 않았습니다.")
+            break
+            
+    
     logging.info(f"Uploading {file_name} to S3...")
     s3.upload_file(file_name, bucket_name, file_name)
     # 파일 다운 후 삭제 메모리 용량보다 전체 파일의 합이 크기 때문
-    os.remove(file_name)
     logging.info(f"Delete local {file_name}")
+    os.remove(file_name)

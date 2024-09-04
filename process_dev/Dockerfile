@@ -9,6 +9,14 @@ RUN mv spark-3.5.1-bin-hadoop3 /usr/lib/spark
 
 ## step 2: Add required JARs
 ARG JAR_HOME=/usr/lib/spark/jars/
+# hadoop aws 3.3.4 - Download jar at build
+# org.apache.hadoop#hadoop-aws added as a dependency ...
+# downloading https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar ...
+# downloading https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar ...
+# downloading https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/1.0.7.Final/wildfly-openssl-1.0.7.Final.jar ...
+ADD https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar $JAR_HOME
+ADD https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar $JAR_HOME
+ADD https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/1.0.7.Final/wildfly-openssl-1.0.7.Final.jar $JAR_HOME
 # Update permissions
 RUN chmod -R +r /usr/lib/spark/jars
 ENV SPARK_HOME=/usr/lib/spark

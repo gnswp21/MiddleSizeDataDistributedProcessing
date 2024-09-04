@@ -34,6 +34,8 @@ for i, file in enumerate(files):
     file_name = file.name
     kaggle_api.dataset_download_file(dataset=dataset,
                                      file_name=file_name)
+    # 
+    file_name = file_name + '.zip'
     # 파일이 생성될 때까지 대기
     elapsed_time = 0
     max_wait_time = 1800

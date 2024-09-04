@@ -2,6 +2,8 @@ import boto3
 import logging
 import os
 import time
+import sys
+import zipfile
 
 from kaggle.api.kaggle_api_extended import KaggleApi
 
@@ -19,44 +21,62 @@ kaggle_api = KaggleApi()
 kaggle_api.authenticate()
 logging.info('KaggleApi Authenticate SUCCESS')
 
-s3 = boto3.client('s3', region_name='ap-northeast-2')
 bucket_name = os.environ['BUCKET_NAME']
 
 dataset = os.environ['DATASET']
 files = kaggle_api.dataset_list_files(dataset).files
 total = len(files)
 
-# 파일 다운
 logging.info(f"Total {total} files")
-for i, file in enumerate(files):
+# 파일 다운
+kaggle_api.dataset_download_files(dataset=dataset, unzip=True)
+with open('rockyou2024.zip', 'wb') as output_file:
+    for i in range(1, 12):  # 파일 번호에 맞춰 범위 설정
+        with open(f'rockyou2024.zip.{i:03}', 'rb') as input_file:
+            output_file.write(input_file.read())
 
-    logging.info(f"NOW {i+1}/{total} file")
-    file_name = file.name
-    kaggle_api.dataset_download_file(dataset=dataset,
-                                     file_name=file_name)
-    # kaggle api는 파일의 크기가 크면 압축파일로 제공한다.
-    file_name = file_name + '.zip'
-    # # 파일이 생성될 때까지 대기
-    # elapsed_time = 0
-    # max_wait_time = 1800
-    # while elapsed_time < max_wait_time:
-    #     # 현재 디렉토리의 파일 목록 가져오기
-    #     files = os.listdir()
+if os.path.exists('rockyou2024.zip'):
+    with zipfile.ZipFile('rockyou2024.zip', 'r') as zip_ref:
+        zip_ref.extractall('rockyou2024')
+    
+# file check
+if not os.path.exists('rockyou2024'):
+    logging.info('no rockyou2024')
+    logging.info(f'{os.listdir()}')
+    sys.exit(-1)
+    
+# set varables    
+s3 = boto3.client('s3', region_name='ap-northeast-2')
+file_path = 'rockyou2024'
+key = 'rockyou2024'
 
-    #     if file_name in files:
-    #         logging.info(f"{file_name} is Found ")
-    #         break
+# 멀티파트 업로드 시작
+# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/create_multipart_upload.html
+# https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html
+multipart_upload = s3.create_multipart_upload(Bucket=bucket_name, Key=key)
 
-    #     # 1분(60초) 대기
-    #     time.sleep(60)
-    #     elapsed_time += 60
-    #     logging.info(f" sleeping {elapsed_time} sec ...")
-    #     if elapsed_time >= max_wait_time:
-    #         logging.info(f" {file_name} is NOT Found until limit")
-    #         break
+# 파일 크기 확인
+file_size = os.path.getsize(file_path)
+part_size = 100 * 1024 * 1024  # 각 파트 크기를 100MB로 설정
+parts = []
 
-    logging.info(f"Uploading {file_name} to S3...")
-    s3.upload_file(file_name, bucket_name, file_name)
-    # 파일 다운 후 삭제 메모리 용량보다 전체 파일의 합이 크기 때문
-    logging.info(f"Delete local {file_name}")
-    os.remove(file_name)
+with open(file_path, 'rb') as f:
+    part_number = 1
+    while chunk := f.read(part_size):
+        response = s3.upload_part(
+            Bucket=bucket_name,
+            Key=key,
+            PartNumber=part_number,
+            UploadId=multipart_upload['UploadId'],
+            Body=chunk
+        )
+        parts.append({'PartNumber': part_number, 'ETag': response['ETag']})
+        part_number += 1
+
+# 모든 파트를 완료
+s3.complete_multipart_upload(
+    Bucket=bucket_name,
+    Key=key,
+    UploadId=multipart_upload['UploadId'],
+    MultipartUpload={'Parts': parts}
+)

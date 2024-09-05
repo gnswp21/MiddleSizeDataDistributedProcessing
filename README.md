@@ -1,7 +1,13 @@
 # MiddleSizeDataDistributedProcessing
 중간 규모(50기가)의 데이터를 emr on eks로 분산 처리 효율성을 분석한다.
 
-
+# send2s3
+```
+docker build -t extract -f ./extract/Dockerfile .
+docker compose -f ./extract/docker-compose.yml up -d --build 
+docker logs -f extarct
+docker compose -f ./process_dev/docker-compose.yml down
+```
 
 
 # dev

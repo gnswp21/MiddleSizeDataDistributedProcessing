@@ -1,8 +1,9 @@
 services:
     extract:
         build: .
+        container_name: extract
         volumes:
-            - ./data:/app/data
+            - ../data:/etl/data
         environment:
             - KAGGLE_USERNAME=${KAGGLE_USERNAME}
             - KAGGLE_KEY=${KAGGLE_KEY}
@@ -10,3 +11,5 @@ services:
             - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
             - BUCKET_NAME=middle-dataset
             - DATASET=bwandowando/common-password-list-rockyou2024-txt
+        command: >
+            python3 /etl/extract/src/send2s3.py

@@ -28,35 +28,8 @@ total = len(files)
 
 # 파일 다운
 logging.info(f"Total {total} files")
-for i, file in enumerate(files):
-
-    logging.info(f"NOW {i+1}/{total} file")
-    file_name = file.name
-    kaggle_api.dataset_download_file(dataset=dataset,
-                                     file_name=file_name)
-    # kaggle api는 파일의 크기가 크면 압축파일로 제공한다.
-    file_name = file_name + '.zip'
-    # # 파일이 생성될 때까지 대기
-    # elapsed_time = 0
-    # max_wait_time = 1800
-    # while elapsed_time < max_wait_time:
-    #     # 현재 디렉토리의 파일 목록 가져오기
-    #     files = os.listdir()
-
-    #     if file_name in files:
-    #         logging.info(f"{file_name} is Found ")
-    #         break
-
-    #     # 1분(60초) 대기
-    #     time.sleep(60)
-    #     elapsed_time += 60
-    #     logging.info(f" sleeping {elapsed_time} sec ...")
-    #     if elapsed_time >= max_wait_time:
-    #         logging.info(f" {file_name} is NOT Found until limit")
-    #         break
-
-    logging.info(f"Uploading {file_name} to S3...")
-    s3.upload_file(file_name, bucket_name, file_name)
-    # 파일 다운 후 삭제 메모리 용량보다 전체 파일의 합이 크기 때문
-    logging.info(f"Delete local {file_name}")
-    os.remove(file_name)
+kaggle_api.dataset_download_files(dataset=dataset, unzip=True, path='data')
+# logging.info(f"Uploading {file_name} to S3...")
+# s3.upload_file(file_name, bucket_name, file_name)
+# # 파일 다운 후 삭제 메모리 용량보다 전체 파일의 합이 크기 때문
+# logging.info(f"Delete local {file_name}")

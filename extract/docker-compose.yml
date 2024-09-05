@@ -7,4 +7,4 @@ services:
             - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
             - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
             - BUCKET_NAME=middle-dataset
-            - DATASET=bwandowando/original-rockyou2024-text-file-11-parts
+            - DATASET=bwandowando/common-password-list-rockyou2024-txt

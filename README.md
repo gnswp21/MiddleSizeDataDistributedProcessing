@@ -4,8 +4,8 @@
 # send2s3
 ```
 docker build -t extract -f ./extract/Dockerfile .
-docker compose -f ./extract/docker-compose.yml up -d --build 
-docker logs -f extarct
+docker compose -f ./extract/docker-compose.yml up -d
+docker logs -f extract
 docker compose -f ./process_dev/docker-compose.yml down
 ```
 

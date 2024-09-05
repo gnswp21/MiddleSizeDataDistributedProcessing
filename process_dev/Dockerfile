@@ -30,6 +30,7 @@ RUN apt-get update && \
     apt-get install -y python3 python3-pip && \
     apt-get install -y zip
 RUN pip3 install pyspark
+RUN pip3 install nltk
 
 
 # # step 4: copy over custom ETL python modules

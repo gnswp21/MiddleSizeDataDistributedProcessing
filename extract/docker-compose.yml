@@ -1,6 +1,6 @@
 services:
     extract:
-        build:
+        build: .
         volumes:
             - data:/app/data
         environment:

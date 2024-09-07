@@ -18,6 +18,8 @@ docker logs -f dev
 docker compose -f ./process_dev/docker-compose.yml down
 ```
 
+# .env
+##
 
 ## 깃 컨벤션
 | Tag Name         | Description                                                                                   |

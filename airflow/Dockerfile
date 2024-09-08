@@ -33,6 +33,9 @@ RUN chown -R airflow /usr/local/bin /usr/local/aws-cli
 # Switch back to airflow user
 USER airflow
 
+
 # Ensure airflow user PATH includes /usr/local/bin
 ENV PATH="/usr/local/bin:$PATH"
+WORKDIR /opt/airflow
+
 

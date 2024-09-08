@@ -32,7 +32,7 @@ with DAG(dag_id='run_job',
     # Run EMR on EKS Job
     run_job = BashOperator(
         task_id='run_job',  # task_id 수정 (공백 제거)
-        bash_command='aws emr-containers start-job-run --cli-input-json file:///etl/process/job-run.json'
+        bash_command='aws emr-containers start-job-run --cli-input-json file:///opt/airflow/config/job-run.json'
     )
 
 

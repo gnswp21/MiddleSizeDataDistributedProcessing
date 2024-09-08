@@ -1,6 +1,6 @@
 {
   "name": "dev-job",
-  "virtualClusterId": "1kedakb04diui404klu9mkoe1",
+  "virtualClusterId": "9npapnc9scs710z1wabnvd6tq",
   "executionRoleArn": "arn:aws:iam::691487686124:role/EMRContainers-JobExecutionRole",
   "releaseLabel": "emr-6.5.0-latest",
   "jobDriver": {
@@ -9,7 +9,8 @@
       "entryPointArguments": [
         "dev-task"
       ],
-      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip"
+      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --conf spark.eventLog.enabled=true --conf spark.eventLog.dir=s3://middle-dataset-logging/spark-logs/ --conf spark.history.fs.logDirectory=s3://middle-dataset-logging/spark-logs/"
+
     }
   },
 

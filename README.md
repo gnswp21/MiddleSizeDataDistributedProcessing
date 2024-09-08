@@ -20,7 +20,7 @@ docker compose -f ./process_dev/docker-compose.yml down
 
 # airflow
 ```commandline
-docker compose -f ./airflow/docker-compose.yml up -d --build
+docker compose -f ./airflow/docker-compose.yml up --build
 ```
 
 # .env

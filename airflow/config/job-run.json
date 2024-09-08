@@ -9,7 +9,7 @@
       "entryPointArguments": [
         "dev-task"
       ],
-      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --conf spark.eventLog.enabled=true --conf spark.eventLog.dir=s3://middle-dataset-logging/spark-logs/ --conf spark.history.fs.logDirectory=s3://middle-dataset-logging/spark-logs/"
+      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip"
 
     }
   },

@@ -16,6 +16,14 @@ with DAG(dag_id='delete_cluster',
     # Delete EMR Virtual Cluster
     delete_emr_virtual_cluster = BashOperator(
         task_id='delete_emr_virtual_cluster',
-        bash_command='aws emr-containers delete-virtual-cluster --id 1kedakb04diui404klu9mkoe1'
+        bash_command='aws emr-containers delete-virtual-cluster --id 9npapnc9scs710z1wabnvd6tq'
     )
+
+    # Delete EMR Virtual Cluster
+    delete_eks_cluster = BashOperator(
+        task_id='delete_eks_cluster',
+        bash_command='eksctl delete cluster --name mid-cluster'
+    )
+
+    delete_emr_virtual_cluster >> delete_eks_cluster
 

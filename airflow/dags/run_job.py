@@ -23,16 +23,13 @@ def get_emr_virtual_cluster_id_by_bash():
         return {'virtual_cluster_id': virtual_cluster_id}
 
 
-def run_job_func(dataset, task_id, **kwargs):
+def run_job_func(**kwargs):
     # XCom에서 값을 가져옴
-    ti = kwargs['ti']
-    virtual_cluster_id = ti.xcom_pull(task_ids='get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
-    args = 'aws emr-containers start-job-run --cli-input-json file:///opt/airflow/config/job-run.json'.split()
+    virtual_cluster_id = kwargs['ti'].xcom_pull(task_ids='get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
+    job_run_id = kwargs['job_run_id']
+    args = f'aws emr-containers start-job-run --cli-input-json file:///opt/airflow/config/job-run-{job_run_id}.json'.split()
     args.extend(["--virtual-cluster-id", virtual_cluster_id])
-    entryPointArguments = ["--job-driver",
-                           "'" + '{"sparkSubmitJobDriver": {"entryPointArguments": ["dev-job-1", "%s", "%s"]}}' % (dataset, task_id) + "'"]
-    args.extend(entryPointArguments)
-    print(args)
+    print(" ".join(args))
     result = subprocess.run(args=args, capture_output=True, text=True)
     if result.stdout:
         print(result.stdout)
@@ -58,7 +55,7 @@ with DAG(dag_id='run_job',
     run_job_1 = PythonOperator(
         task_id='run_job_1',  # task_id 수정 (공백 제거)
         python_callable=run_job_func,
-        op_kwargs={'entry_point_args': '["dev-dataset", "task1"]'},
+        op_kwargs={'job_run_id':'1'},
         provide_context=True
     )
 
@@ -66,7 +63,7 @@ with DAG(dag_id='run_job',
     run_job_2 = PythonOperator(
         task_id='run_job_2',  # task_id 수정 (공백 제거)
         python_callable=run_job_func,
-        op_kwargs={'entry_point_args': '["dev-dataset", "task1"]'},
+        op_kwargs={'job_run_id':'1'},
         provide_context=True
     )
 
@@ -74,7 +71,7 @@ with DAG(dag_id='run_job',
     run_job_3 = PythonOperator(
         task_id='run_job_3',  # task_id 수정 (공백 제거)
         python_callable=run_job_func,
-        op_kwargs={'entry_point_args': '["dev-dataset", "task1"]'},
+        op_kwargs={'job_run_id':'1'},
         provide_context=True
     )
 
@@ -82,7 +79,7 @@ with DAG(dag_id='run_job',
     run_job_4 = PythonOperator(
         task_id='run_job_4',  # task_id 수정 (공백 제거)
         python_callable=run_job_func,
-        op_kwargs={'entry_point_args': '["dev-dataset", "task1"]'},
+        op_kwargs={'job_run_id':'1'},
         provide_context=True
     )
 

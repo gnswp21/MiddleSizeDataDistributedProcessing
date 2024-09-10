@@ -5,8 +5,7 @@ WORKDIR /home/root
 ## apt-get update
 RUN apt-get update && apt-get install unzip
 
-# insatll request python package
-RUN pip install requests boto3 requests pandas
+
 
 # install aws cli
 # https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/getting-started-install.html
@@ -42,6 +41,9 @@ RUN chown -R airflow /usr/local/bin /usr/local/aws-cli
 
 # Switch back to airflow user
 USER airflow
+
+# insatll request python package
+RUN pip install requests boto3 requests pandas
 
 
 # Ensure airflow user PATH includes /usr/local/bin

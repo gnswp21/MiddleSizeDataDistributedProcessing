@@ -4,9 +4,11 @@ from datetime import datetime
 import json
 
 
-def get_emr_virtual_cluster_id_by_bash():
+def get_emr_virtual_cluster_id_by_bash(**kwargs):
+    cluster_name = kwargs['cluster_name']
+    emr_virtual_cluster_name = f'{cluster_name}_emr_virtual_cluster'
     args = "aws emr-containers list-virtual-clusters --region ap-northeast-2 --query".split()
-    args.append('virtualClusters[?name==`mid_emr_virtual_cluster` && state==`RUNNING`].id')
+    args.append(f"virtualClusters[?name==`{emr_virtual_cluster_name}` && state==`RUNNING`].id")
     print(args)
     result = subprocess.run(args=args, capture_output=True, text=True)
     if result.stdout:
@@ -222,3 +224,12 @@ def save_job_result(**kwargs):
         save_csv_to_s3(df, s3_bucket_name, s3_key)
 
     print(f"Data successfully uploaded to s3://{s3_bucket_name}/{s3_key}")
+
+
+def set_port_forwarding(**kwargs):
+    ti = kwargs['ti']
+    eks_arn = ti.xcom_pull(task_ids='get_eks_arn')
+    eks_arn = eks_arn.strip()
+    args = f"kubectl --context {eks_arn} port-forward prometheus-monitoring-kube-prometheus-prometheus-0 9090:9090 &>/dev/null &"
+    args = args.split()
+    result = subprocess.run(args=args, capture_output=True, text=True)

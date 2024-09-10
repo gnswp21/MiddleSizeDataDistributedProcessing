@@ -20,10 +20,9 @@ with DAG(dag_id='delete_cluster',
         task_id='get_emr_virtual_cluster_id',
         python_callable=get_emr_virtual_cluster_id_by_bash,
     )
-
     # Run EMR on EKS Job
     delete_emr_virtual_cluster = PythonOperator(
-        task_id='delete_emr_virtual_cluster',  # task_id 수정 (공백 제거)
+        task_id='delete_emr_virtual_cluster',
         python_callable=delete_emr_virtual_cluster_func,
         provide_context=True
     )

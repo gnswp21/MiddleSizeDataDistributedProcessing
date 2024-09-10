@@ -12,7 +12,7 @@ with DAG(dag_id='create_cluster',
          default_args=default_args,
          schedule_interval=None,
          catchup=False) as dag:
-
+    ## TODO insert cluster info by cluster spec
     # Create EKS Cluster
     create_eks_cluster = BashOperator(
         task_id='create_eks_cluster',  # task_id 수정 (공백 제거)
@@ -51,5 +51,18 @@ with DAG(dag_id='create_cluster',
         }'
         """
     )
+    # TODO refactor cluster name by xcom
+    # Add kube Prometheus stack by helm
+    add_kube_prometheus_stack = BashOperator(
+        task_id='add_kube_prometheus_stack',
+        bash_command="""
+        aws eks update-kubeconfig --name mid-cluster
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm repo update
+        helm install monitoring prometheus-community/kube-prometheus-stack
+        """
+    )
 
-    create_eks_cluster >> create_iamidentitymapping >> update_trust_policy >> create_emr_virtual_cluster
+
+
+    create_eks_cluster >> create_iamidentitymapping >> update_trust_policy >> create_emr_virtual_cluster >> add_kube_prometheus_stack

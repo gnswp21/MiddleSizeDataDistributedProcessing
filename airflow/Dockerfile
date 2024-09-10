@@ -5,6 +5,9 @@ WORKDIR /home/root
 ## apt-get update
 RUN apt-get update && apt-get install unzip
 
+# insatll request python package
+RUN pip install requests boto3 requests pandas
+
 # install aws cli
 # https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/getting-started-install.html
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
@@ -28,7 +31,7 @@ RUN ARCH=amd64 && \
   mv /tmp/eksctl /usr/local/bin
 
 
-## helm
+## helm k8s package manager
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
     chmod 700 get_helm.sh && \
     ./get_helm.sh

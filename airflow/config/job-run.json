@@ -4,9 +4,9 @@
   "releaseLabel": "emr-6.5.0-latest",
   "jobDriver": {
     "sparkSubmitJobDriver": {
-      "entryPoint": "local:///etl/src/task.py",
+      "entryPoint": "local:///etl/src/run.py",
       "entryPointArguments": [
-        "dev-task"
+        "dev-job-1", "dev-dataset", "task1"
       ],
       "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip"
     }

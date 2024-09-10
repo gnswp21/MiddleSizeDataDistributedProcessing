@@ -77,11 +77,6 @@ def task2(df: DataFrame, broadcast_vocab):
     new_df.show()
 
 
-
-
-
-
-
 def run(kwargs: Dict[Any, Any]):
     spark = SparkSession.builder.appName(f"{kwargs['job_name']}").getOrCreate()
 

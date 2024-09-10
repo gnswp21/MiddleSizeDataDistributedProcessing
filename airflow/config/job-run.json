@@ -1,6 +1,5 @@
 {
   "name": "dev-job",
-  "virtualClusterId": "9npapnc9scs710z1wabnvd6tq",
   "executionRoleArn": "arn:aws:iam::691487686124:role/EMRContainers-JobExecutionRole",
   "releaseLabel": "emr-6.5.0-latest",
   "jobDriver": {
@@ -10,10 +9,8 @@
         "dev-task"
       ],
       "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip"
-
     }
   },
-
   "configurationOverrides": {
     "applicationConfiguration": [
       {
@@ -24,6 +21,7 @@
       }
     ],
     "monitoringConfiguration": {
+      "persistentAppUI": "ENABLED",
       "cloudWatchMonitoringConfiguration": {
         "logGroupName": "middle-dataset-etl-log-group",
         "logStreamNamePrefix": "middle-dataset-etl-log-group-prefix"

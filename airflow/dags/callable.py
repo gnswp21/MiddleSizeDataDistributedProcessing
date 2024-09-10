@@ -43,8 +43,7 @@ def run_job_func(**kwargs):
     :return:
     '''
     # XCom에서 값을 가져옴
-    virtual_cluster_id = kwargs['ti'].xcom_pull(task_ids='get_emr_virtual_cluster_id', key='return_value')[
-        'virtual_cluster_id']
+    virtual_cluster_id = kwargs['ti'].xcom_pull(task_ids='get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
     job_run_id = kwargs['id']
     args = f'aws emr-containers start-job-run --cli-input-json file:///opt/airflow/config/job-run-{job_run_id}.json'.split()
     args.extend(["--virtual-cluster-id", virtual_cluster_id])
@@ -111,6 +110,9 @@ def save_job_result(**kwargs):
                 for result in data["data"]["result"]:
                     # value 배열의 두 번째 인자 (CPU 사용률)를 추출
                     usage = result["value"][1]
+        else:
+            print(response.json())
+
         return usage
 
     # 파일이 존재하는지 확인하는 함수
@@ -160,7 +162,7 @@ def save_job_result(**kwargs):
     time_format = "%Y-%m-%dT%H:%M:%S%z"
     dt1 = datetime.strptime(created_at, time_format)
     dt2 = datetime.strptime(finished_at, time_format)
-    spend_time = (dt2 - dt1).total_seconds()
+    spend_time = int((dt2 - dt1).total_seconds())
 
     # DataFrame Cluster, Job Name
     cluster_name = 'c1'
@@ -213,7 +215,8 @@ def save_job_result(**kwargs):
         print("파일이 존재하지 않습니다. 새 파일을 생성합니다.")
 
         # 새로운 DataFrame 생성
-        df = pd.DataFrame([new_row])
+        # df = pd.DataFrame(new_row)
+        df = new_row
 
         # S3에 업로드
         save_csv_to_s3(df, s3_bucket_name, s3_key)

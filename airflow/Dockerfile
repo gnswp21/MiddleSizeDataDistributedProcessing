@@ -33,7 +33,7 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/s
     chmod 700 get_helm.sh && \
     ./get_helm.sh
 
-RUN chmod 777 /usr/sbin/.kube
+RUN mkdir /usr/sbin/.kube && chmod 777 /usr/sbin/.kube
 
 # Give airflow user access to binaries
 RUN chown -R airflow /usr/local/bin /usr/local/aws-cli

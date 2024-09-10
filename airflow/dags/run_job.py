@@ -26,38 +26,43 @@ with DAG(dag_id='run_job',
     # 포트 포워딩 시작 (데몬으로 실행)
     port_forward_start = BashOperator(
         task_id='port_forward_start',
-        bash_command="aws eks update-kubeconfig --name mid-cluster && "
-                     "kubectl port-forward prometheus-monitoring-kube-prometheus-prometheus-0 9090:9090 &>/dev/null &"
-                     # "kubectl port-forward prometheus-monitoring-kube-prometheus-prometheus-0 9090:9090"
+        bash_command="aws eks update-kubeconfig --name mid-cluster"
+
     )
 
-    # # Run EMR on EKS Job
-    # run_job_1 = PythonOperator(
-    #     task_id='run_job_1',
-    #     python_callable=run_job_func,
-    #     op_kwargs={'id': '1'},
-    #     provide_context=True
-    # )
+    # 포트 포워딩 시작 (데몬으로 실행)
+    port_forward = BashOperator(
+        task_id='port_forward',
+        bash_command= "kubectl port-forward prometheus-monitoring-kube-prometheus-prometheus-0 9090:9090 &>/dev/null &"
+    )
+
+    # Run EMR on EKS Job
+    run_job_1 = PythonOperator(
+        task_id='run_job_1',
+        python_callable=run_job_func,
+        op_kwargs={'id': '1'},
+        provide_context=True
+    )
+
+    wait_job_1 = ShortCircuitOperator(
+        task_id='wait_job_1',
+        python_callable=wait_job_done,
+        op_kwargs={'id': '1'},
+        provide_context=True
+    )
+
+    save_job_result_1 = PythonOperator(
+        task_id='save_job_result_1',
+        python_callable=save_job_result,
+        op_kwargs={'id': '1'},
+        provide_context=True
+    )
     #
-    # wait_job_1 = ShortCircuitOperator(
-    #     task_id='wait_job_1',
-    #     python_callable=wait_job_done,
-    #     op_kwargs={'id': '1'},
-    #     provide_context=True
-    # )
-    #
-    # save_job_result_1 = PythonOperator(
-    #     task_id='save_job_result_1',
-    #     python_callable=save_job_result,
-    #     op_kwargs={'id': '1'},
-    #     provide_context=True
-    # )
-    #
-    # # 포트 포워딩 종료
-    # port_forward_stop = BashOperator(
-    #     task_id='port_forward_stop',
-    #     bash_command="pkill -f 'kubectl port-forward prometheus-monitoring-kube-prometheus-prometheus-0'"
-    # )
+    # 포트 포워딩 종료
+    port_forward_stop = BashOperator(
+        task_id='port_forward_stop',
+        bash_command="pkill -f 'kubectl port-forward prometheus-monitoring-kube-prometheus-prometheus-0'"
+    )
 
     # # Run EMR on EKS Job
     # run_job_2 = PythonOperator(
@@ -124,10 +129,9 @@ with DAG(dag_id='run_job',
     #     op_kwargs={'id': '4'},
     #     provide_context=True
     # )
-    get_emr_virtual_cluster_id >> port_forward_start
-    # get_emr_virtual_cluster_id >> port_forward_start >> \
-    # run_job_1 >> wait_job_1 >> save_job_result_1 >> \
-    # port_forward_stop
+    get_emr_virtual_cluster_id >> port_forward_start >> port_forward >> \
+    run_job_1 >> wait_job_1 >> save_job_result_1 >> \
+    port_forward_stop
     # run_job_2 >> wait_job_2 >> \
     # run_job_3 >> wait_job_3 >> \
     # run_job_4 >> wait_job_4

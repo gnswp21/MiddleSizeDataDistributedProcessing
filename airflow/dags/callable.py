@@ -45,11 +45,12 @@ def run_job_func(**kwargs):
     :return:
     '''
     # XCom에서 값을 가져옴
-    virtual_cluster_id = kwargs['ti'].xcom_pull(task_ids='get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
+    cluster_name = kwargs['cluster_name']
+    prefix = 'cluster_' + cluster_name + '.'
+    virtual_cluster_id = kwargs['ti'].xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
     job_run_id = kwargs['id']
     args = f'aws emr-containers start-job-run --cli-input-json file:///opt/airflow/config/job-run-{job_run_id}.json'.split()
     args.extend(["--virtual-cluster-id", virtual_cluster_id])
-    print(" ".join(args))
     result = subprocess.run(args=args, capture_output=True, text=True)
     if result.stdout:
         print(result.stdout)
@@ -63,10 +64,11 @@ def run_job_func(**kwargs):
 def wait_job_done(**kwargs):
     import time
     ti = kwargs['ti']
-    virtual_cluster_id = ti.xcom_pull(task_ids='get_emr_virtual_cluster_id', key='return_value')[
-        'virtual_cluster_id']
+    cluster_name = kwargs['cluster_name']
+    prefix = 'cluster_' + cluster_name + '.'
+    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + "get_emr_virtual_cluster_id", key='return_value')['virtual_cluster_id']
     run_job_task_ids = 'run_job_' + kwargs['id']
-    job_id = ti.xcom_pull(task_ids=run_job_task_ids, key='return_value')['job_id']
+    job_id = ti.xcom_pull(task_ids=prefix+run_job_task_ids, key='return_value')['job_id']
     args = ['aws', 'emr-containers', 'describe-job-run', '--id', job_id, '--virtual-cluster-id', virtual_cluster_id]
     while True:
         result = subprocess.run(args=args, capture_output=True, text=True)
@@ -147,20 +149,25 @@ def save_job_result(**kwargs):
         df.to_csv(csv_buffer, index=False)
         s3.put_object(Bucket=bucket, Key=key, Body=csv_buffer.getvalue())
 
-    # Prometheus API 엔드포인트 설정
-    prometheus_url = 'http://localhost:9090/api/v1/query'
+
 
     # Get Xcom Variables
     ti = kwargs['ti']
     id = kwargs['id']
+    port = kwargs['port']
 
+    # Prometheus API 엔드포인트 설정
+    prometheus_url = f'http://localhost:{port}/api/v1/query'
+
+    cluster_name = kwargs['cluster_name']
+    prefix = 'cluster_' + cluster_name + '.'
     run_job_id = 'run_job_' + id
     wait_job_task_id = 'wait_job_' + id
-    virtual_cluster_id = ti.xcom_pull(task_ids='get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
+    virtual_cluster_id = ti.xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
 
     # Spend Time, Convert strings to datetime objects
-    created_at = ti.xcom_pull(task_ids=wait_job_task_id, key='createdAt')
-    finished_at = ti.xcom_pull(task_ids=wait_job_task_id, key='finishedAt')
+    created_at = ti.xcom_pull(task_ids=prefix+wait_job_task_id, key='createdAt')
+    finished_at = ti.xcom_pull(task_ids=prefix+wait_job_task_id, key='finishedAt')
     time_format = "%Y-%m-%dT%H:%M:%S%z"
     dt1 = datetime.strptime(created_at, time_format)
     dt2 = datetime.strptime(finished_at, time_format)
@@ -228,8 +235,38 @@ def save_job_result(**kwargs):
 
 def set_port_forwarding(**kwargs):
     ti = kwargs['ti']
-    eks_arn = ti.xcom_pull(task_ids='get_eks_arn')
-    eks_arn = eks_arn.strip()
-    args = f"kubectl --context {eks_arn} port-forward prometheus-monitoring-kube-prometheus-prometheus-0 9090:9090 &>/dev/null &"
-    args = args.split()
-    result = subprocess.run(args=args, capture_output=True, text=True)
+    cluster_name = kwargs['cluster_name']
+    eks_arn = ti.xcom_pull(task_ids='cluster_'+cluster_name+'.get_eks_arn', key='return_value')
+    port = kwargs['port']
+
+    # kubeconfig 업데이트
+    args = f"aws eks update-kubeconfig --name {cluster_name}"
+    result = subprocess.run(args, shell=True, capture_output=True, text=True)
+    if result.stdout:
+        print(result.stdout)
+    if result.stderr:
+        print('Error:', result.stderr)
+
+    # 포트에서 실행 중인 프로세스 종료 (sudo 권한이 없다면 sudo를 제외)
+    args = f"lsof -t -i:{port} | xargs kill -9"
+    result = subprocess.run(args, shell=True, capture_output=True, text=True)
+    if result.stdout:
+        print(result.stdout)
+    if result.stderr:
+        print('Error:', result.stderr)
+
+    # 포트 포워딩 실행
+    args = f"kubectl --context {eks_arn} port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &>/dev/null &"
+    result = subprocess.run(args, shell=True, capture_output=True, text=True)
+    if result.stdout:
+        print(result.stdout)
+    if result.stderr:
+        print('Error:', result.stderr)
+
+    # Prometheus 쿼리 실행
+    args = f"curl -G 'http://localhost:{port}/api/v1/query' --data-urlencode 'query=sum(rate(container_network_transmit_bytes_total[1h]))'"
+    result = subprocess.run(args, shell=True, capture_output=True, text=True)
+    if result.stdout:
+        print(result.stdout)
+    if result.stderr:
+        print('Error:', result.stderr)

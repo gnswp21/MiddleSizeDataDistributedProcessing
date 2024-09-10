@@ -3,7 +3,7 @@ USER root
 RUN mkdir -p /home/root
 WORKDIR /home/root
 ## apt-get update
-RUN apt-get update && apt-get install unzip && apt-get install -y procps
+RUN apt-get update && apt-get install unzip && apt-get install -y procps && apt-get install -y lsof
 
 # install aws cli
 # https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/getting-started-install.html

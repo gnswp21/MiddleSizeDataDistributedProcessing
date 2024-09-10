@@ -129,9 +129,9 @@ with DAG(dag_id='run_job',
     #     op_kwargs={'id': '4'},
     #     provide_context=True
     # )
-    get_emr_virtual_cluster_id >> port_forward_start >> port_forward >> \
-    run_job_1 >> wait_job_1 >> save_job_result_1 >> \
-    port_forward_stop
+    get_emr_virtual_cluster_id >> port_forward_start >> port_forward #>> \
+    # run_job_1 >> wait_job_1 >> save_job_result_1 >> \
+    # port_forward_stop
     # run_job_2 >> wait_job_2 >> \
     # run_job_3 >> wait_job_3 >> \
     # run_job_4 >> wait_job_4

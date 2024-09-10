@@ -70,9 +70,12 @@ def wait_job_done(**kwargs):
     while True:
         result = subprocess.run(args=args, capture_output=True, text=True)
         if result.stdout:
+            print(result.stdout)
             data = json.loads(result.stdout)
             state = data.get('jobRun').get('state')
-            if state == "FAILED" or "CANCELLED":
+            if state == "FAILED" or state == "CANCELLED":
+                print(state)
+                print('HERE 1', state, state == "FAILED", state == "CANCELLED")
                 return False
             elif state == "COMPLETED":
                 createdAt = data.get('jobRun').get('createdAt')
@@ -82,6 +85,8 @@ def wait_job_done(**kwargs):
                 return True
             else:
                 time.sleep(60)
+                continue
         if result.stderr:
             print(result.stderr)
+            print('HERE 2')
             return False

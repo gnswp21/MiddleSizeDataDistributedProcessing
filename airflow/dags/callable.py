@@ -241,6 +241,7 @@ def set_port_forwarding(**kwargs):
 
     # kubeconfig 업데이트
     args = f"aws eks update-kubeconfig --name {cluster_name}"
+    print(args)
     result = subprocess.run(args, shell=True, capture_output=True, text=True)
     if result.stdout:
         print(result.stdout)
@@ -248,25 +249,28 @@ def set_port_forwarding(**kwargs):
         print('Error:', result.stderr)
 
     # 포트에서 실행 중인 프로세스 종료 (sudo 권한이 없다면 sudo를 제외)
-    args = f"lsof -t -i:{port} | xargs kill -9"
-    result = subprocess.run(args, shell=True, capture_output=True, text=True)
-    if result.stdout:
-        print(result.stdout)
-    if result.stderr:
-        print('Error:', result.stderr)
+    # args = f"lsof -t -i:{port} | xargs kill -9"
+    # print(args)
+    # result = subprocess.run(args, shell=True, capture_output=True, text=True)
+    # if result.stdout:
+    #     print(result.stdout)
+    # if result.stderr:
+    #     print('Error:', result.stderr)
 
     # 포트 포워딩 실행
-    args = f"kubectl --context {eks_arn} port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &>/dev/null &"
-    result = subprocess.run(args, shell=True, capture_output=True, text=True)
-    if result.stdout:
-        print(result.stdout)
-    if result.stderr:
-        print('Error:', result.stderr)
+    # args = f"kubectl --context {eks_arn} port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &>/dev/null &"
+    # print(args)
+    # result = subprocess.run(args, shell=True, capture_output=True, text=True)
+    # if result.stdout:
+    #     print(result.stdout)
+    # if result.stderr:
+    #     print('Error:', result.stderr)
 
     # Prometheus 쿼리 실행
-    args = f"curl -G 'http://localhost:{port}/api/v1/query' --data-urlencode 'query=sum(rate(container_network_transmit_bytes_total[1h]))'"
-    result = subprocess.run(args, shell=True, capture_output=True, text=True)
-    if result.stdout:
-        print(result.stdout)
-    if result.stderr:
-        print('Error:', result.stderr)
+    # args = f"curl -G 'http://localhost:{port}/api/v1/query' --data-urlencode 'query=sum(rate(container_network_transmit_bytes_total[1h]))'"
+    # print(args)
+    # result = subprocess.run(args, shell=True, capture_output=True, text=True)
+    # if result.stdout:
+    #     print(result.stdout)
+    # if result.stderr:
+    #     print('Error:', result.stderr)

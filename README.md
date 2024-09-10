@@ -23,6 +23,12 @@ docker compose -f ./process_dev/docker-compose.yml down
 docker compose -f ./airflow/docker-compose.yml up --build
 ```
 
+#
+```commandline
+pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/config/job-run.json ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/config/job-run.json
+pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/dags/run_job.py ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/dags
+```
+
 # .env
 ##
 

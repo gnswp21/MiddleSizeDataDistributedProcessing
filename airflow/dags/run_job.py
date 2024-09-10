@@ -1,40 +1,15 @@
 import subprocess
-
+from callable import *
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from datetime import datetime
 
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import PythonOperator, ShortCircuitOperator
 
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2023, 7, 1)
 }
-
-
-def get_emr_virtual_cluster_id_by_bash():
-    args = "aws emr-containers list-virtual-clusters --region ap-northeast-2 --query".split()
-    args.append('virtualClusters[?name==`mid_emr_virtual_cluster` && state==`RUNNING`].id')
-    print(args)
-    result = subprocess.run(args=args, capture_output=True, text=True)
-    if result.stdout:
-        case = result.stdout.strip()
-        virtual_cluster_id = case[1:-1].strip()[1:-1]
-        return {'virtual_cluster_id': virtual_cluster_id}
-
-
-def run_job_func(**kwargs):
-    # XCom에서 값을 가져옴
-    virtual_cluster_id = kwargs['ti'].xcom_pull(task_ids='get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
-    job_run_id = kwargs['job_run_id']
-    args = f'aws emr-containers start-job-run --cli-input-json file:///opt/airflow/config/job-run-{job_run_id}.json'.split()
-    args.extend(["--virtual-cluster-id", virtual_cluster_id])
-    print(" ".join(args))
-    result = subprocess.run(args=args, capture_output=True, text=True)
-    if result.stdout:
-        print(result.stdout)
-    if result.stderr:
-        print(result.stderr)
 
 
 with DAG(dag_id='run_job',
@@ -53,34 +28,65 @@ with DAG(dag_id='run_job',
 
     # Run EMR on EKS Job
     run_job_1 = PythonOperator(
-        task_id='run_job_1',  # task_id 수정 (공백 제거)
+        task_id='run_job_1',
         python_callable=run_job_func,
         op_kwargs={'job_run_id':'1'},
+        provide_context=True
+    )
+
+    wait_job_1 = ShortCircuitOperator(
+        task_id='wait_job_1',
+        python_callable=run_job_func,
+        op_kwargs={'task_ids': 'run_job_1'},
         provide_context=True
     )
 
     # Run EMR on EKS Job
     run_job_2 = PythonOperator(
-        task_id='run_job_2',  # task_id 수정 (공백 제거)
+        task_id='run_job_2',
         python_callable=run_job_func,
-        op_kwargs={'job_run_id':'1'},
+        op_kwargs={'job_run_id':'2'},
+        provide_context=True
+    )
+
+    wait_job_2 = ShortCircuitOperator(
+        task_id='wait_job_2',
+        python_callable=run_job_func,
+        op_kwargs={'task_ids': 'run_job_2'},
         provide_context=True
     )
 
     # Run EMR on EKS Job
     run_job_3 = PythonOperator(
-        task_id='run_job_3',  # task_id 수정 (공백 제거)
+        task_id='run_job_3',
         python_callable=run_job_func,
-        op_kwargs={'job_run_id':'1'},
+        op_kwargs={'job_run_id':'3'},
+        provide_context=True
+    )
+
+    wait_job_3 = ShortCircuitOperator(
+        task_id='wait_job_3',
+        python_callable=run_job_func,
+        op_kwargs={'task_ids': 'run_job_3'},
         provide_context=True
     )
 
     # Run EMR on EKS Job
     run_job_4 = PythonOperator(
-        task_id='run_job_4',  # task_id 수정 (공백 제거)
+        task_id='run_job_4',
         python_callable=run_job_func,
-        op_kwargs={'job_run_id':'1'},
+        op_kwargs={'job_run_id':'4'},
         provide_context=True
     )
 
-    get_emr_virtual_cluster_id >> run_job_1 >> run_job_2 >> run_job_3 >> run_job_4
+    wait_job_4 = ShortCircuitOperator(
+        task_id='wait_job_4',
+        python_callable=run_job_func,
+        op_kwargs={'task_ids': 'wait_job_4'},
+        provide_context=True
+    )
+
+    get_emr_virtual_cluster_id >> run_job_1 >> wait_job_1 >> \
+    run_job_2 >> wait_job_2 >> \
+    run_job_3 >> wait_job_3 >> \
+    run_job_4 >> wait_job_4

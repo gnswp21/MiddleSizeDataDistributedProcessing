@@ -26,7 +26,7 @@ RUN pip3 install nltk
 
 
 # # step 4: copy over custom ETL python modules
-COPY process_dev/src /etl/src
+COPY process/src /etl/src
 RUN cd /etl \
     && zip -r dependency_packages.zip src/ \
     && chmod +x /etl/dependency_packages.zip \
@@ -34,6 +34,4 @@ RUN cd /etl \
 # COPY data /etl/data
 
 ## step 5: copy Java/Spark/Hadoop related config
-COPY process/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf
-RUN mkdir $SPARK_HOME/logs
 WORKDIR /etl

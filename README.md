@@ -22,8 +22,19 @@ docker compose -f ./process_dev/docker-compose.yml down
 ```commandline
 docker compose -f ./airflow/docker-compose.yml up --build
 ```
+# process
+```bash
+# For docker build login seoul dcr
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 996579266876.dkr.ecr.ap-northeast-2.amazonaws.com
+# For docker push login my dcr
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 691487686124.dkr.ecr.ap-northeast-2.amazonaws.com
+docker build -t emr6.5_mid -f .\process\Dockerfile .
+docker tag emr6.5_mid 691487686124.dkr.ecr.ap-northeast-2.amazonaws.com/emr6.5_mid_repo
+docker push 691487686124.dkr.ecr.ap-northeast-2.amazonaws.com/emr6.5_mid_repo
+```
 
-#
+
+# 푸시파일 to airflow
 ```commandline
 pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/config/job-run.json ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/config/job-run.json
 pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/dags/run_job.py ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/dags

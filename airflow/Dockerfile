@@ -27,6 +27,13 @@ RUN ARCH=amd64 && \
   tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz  && \
   mv /tmp/eksctl /usr/local/bin
 
+
+## helm
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
+    chmod 700 get_helm.sh && \
+    ./get_helm.sh
+
+
 # Give airflow user access to binaries
 RUN chown -R airflow /usr/local/bin /usr/local/aws-cli
 

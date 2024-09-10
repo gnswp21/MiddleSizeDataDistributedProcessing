@@ -3,9 +3,7 @@ USER root
 RUN mkdir -p /home/root
 WORKDIR /home/root
 ## apt-get update
-RUN apt-get update && apt-get install unzip
-
-
+RUN apt-get update && apt-get install unzip && apt-get install -y procps
 
 # install aws cli
 # https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/getting-started-install.html
@@ -35,6 +33,7 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/s
     chmod 700 get_helm.sh && \
     ./get_helm.sh
 
+RUN chmod 777 /usr/sbin/.kube
 
 # Give airflow user access to binaries
 RUN chown -R airflow /usr/local/bin /usr/local/aws-cli

@@ -22,7 +22,7 @@ docker compose -f ./process_dev/docker-compose.yml down
 ```commandline
 docker compose -f ./airflow/docker-compose.yml up --build
 ```
-# process
+# Build Dockerfile
 ```bash
 # For docker build login seoul dcr
 aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 996579266876.dkr.ecr.ap-northeast-2.amazonaws.com

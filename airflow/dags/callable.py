@@ -49,11 +49,18 @@ def run_job_func(**kwargs):
     # XCom에서 값을 가져옴
     cluster_name = kwargs['cluster_name']
     prefix = 'cluster_' + cluster_name + '.'
-    virtual_cluster_id = kwargs['ti'].xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
+    virtual_cluster_id = kwargs['ti'].xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id',
+                                                key='return_value')['virtual_cluster_id']
     job_run_id = kwargs['id']
-    args = f'aws emr-containers start-job-run --cli-input-json file:///opt/airflow/config/job-run-{job_run_id}.json'.split()
+
+    # Set Args
+    args = f'aws emr-containers start-job-run --cli-input-json file:///opt/airflow/config/{cluster_name}/job-run-{job_run_id}.json'.split()
     args.extend(["--virtual-cluster-id", virtual_cluster_id])
+
+    # Run aws emr-containers start-job-run
     result = subprocess.run(args=args, capture_output=True, text=True)
+
+    # Check Result
     if result.stdout:
         print(result.stdout)
         data = json.loads(result.stdout)

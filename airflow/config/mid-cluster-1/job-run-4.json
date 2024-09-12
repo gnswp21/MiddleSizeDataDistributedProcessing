@@ -5,10 +5,8 @@
   "jobDriver": {
     "sparkSubmitJobDriver": {
       "entryPoint": "local:///etl/src/run.py",
-      "entryPointArguments": [
-        "dev-job-2", "dev-dataset", "task1"
-      ],
-      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip"
+      "entryPointArguments": ["dev-job-4", "one", "1", "mid-cluster-1", "job-4"],
+      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --driver-memory 6G --driver-cores 1 --executor-memory 10G --executor-cores 3 --num-executors 2"
     }
   },
   "configurationOverrides": {

@@ -43,13 +43,13 @@ with DAG(dag_id='run_job_multi',
             # get_kubeconfig
             get_kubeconfig = BashOperator(
                 task_id='get_kubeconfig',
-                bash_command=f"aws eks update-kubeconfig --name {cluster_name} --kubeconfig ./{cluster_name}_config"
+                bash_command=f"aws eks update-kubeconfig --name {cluster_name} --kubeconfig /tmp/{cluster_name}_config"
             )
 
             # 포트 포워딩 시작 데몬으로
             port_forward = BashOperator(
                 task_id='port_forward',
-                bash_command=f"nohup kubectl --kubeconfig {cluster_name}_config port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &"
+                bash_command=f"kubectl --kubeconfig /tmp/{cluster_name}_config port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &>log &"
             )
 
             # Run EMR on EKS Job
@@ -77,7 +77,7 @@ with DAG(dag_id='run_job_multi',
             # 포트 포워딩 종료
             port_forward_stop = BashOperator(
                 task_id='port_forward_stop',
-                bash_command=f"pkill -f 'kubectl port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0'"
+                bash_command=f"kill -9 $(lsof -t -i :{port})"
             )
 
             # # Run EMR on EKS Job

@@ -40,19 +40,16 @@ with DAG(dag_id='run_job_multi',
 
             )
 
-            # eks kube config set
-            set_eks_config = PythonOperator(
-                task_id='set_eks_config',
-                python_callable=set_eks_config,
-                provide_context=True,
-                op_kwargs={'cluster_name':cluster_name, 'port': port}
+            # get_kubeconfig
+            get_kubeconfig = BashOperator(
+                task_id='get_kubeconfig',
+                bash_command=f"aws eks update-kubeconfig --name {cluster_name} --kubeconfig ./{cluster_name}_config"
             )
 
-            # 포트 포워딩 시작 (데몬으로 실행)
+            # 포트 포워딩 시작 데몬으로
             port_forward = BashOperator(
                 task_id='port_forward',
-                bash_command=f"aws eks update-kubeconfig --name {cluster_name} --kubeconfig ./{cluster_name}_config &&" 
-                f"kubectl --kubeconfig {cluster_name}_config port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &>/dev/null &"
+                bash_command=f"nohup kubectl --kubeconfig {cluster_name}_config port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &"
             )
 
             # Run EMR on EKS Job
@@ -148,7 +145,7 @@ with DAG(dag_id='run_job_multi',
             #     op_kwargs={'id': '4'},
             #     provide_context=True
             # )
-            get_emr_virtual_cluster_id >> get_eks_arn >> set_eks_config >> port_forward >> \
+            get_emr_virtual_cluster_id >> get_eks_arn >> get_kubeconfig >> port_forward >> \
             run_job_1 >> wait_job_1 >> save_job_result_1 >> \
             port_forward_stop
     # run_job_2 >> wait_job_2 >> \

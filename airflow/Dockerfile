@@ -41,6 +41,8 @@ RUN helm repo add prometheus-community https://prometheus-community.github.io/he
 # Give airflow user access to binaries
 RUN chown -R airflow /usr/local/bin /usr/local/aws-cli
 
+RUN chown -R airflow /opt/airflow/config
+
 # Switch back to airflow user
 USER airflow
 

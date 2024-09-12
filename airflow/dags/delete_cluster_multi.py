@@ -38,14 +38,14 @@ with DAG(dag_id='delete_cluster_multi',
             # Update k8s config
             update_k8s_config = BashOperator(
                 task_id='update_k8s_config',
-                bash_command=f"aws eks update-kubeconfig --name {cluster_name}"
+                bash_command=f"aws eks update-kubeconfig --name {cluster_name} --kubeconfig ./{cluster_name}_config"
             )
 
 
             # Delete EMR Virtual Cluster
             delete_eks_cluster = BashOperator(
                 task_id='delete_eks_cluster',
-                bash_command=f'eksctl delete cluster --name {cluster_name}'
+                bash_command=f'eksctl delete cluster --name {cluster_name} --kubeconfig ./{cluster_name}_config'
             )
 
             get_emr_virtual_cluster_id >> update_k8s_config >> delete_emr_virtual_cluster >> delete_eks_cluster

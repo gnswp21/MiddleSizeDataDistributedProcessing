@@ -1,3 +1,4 @@
+import os
 import subprocess
 import boto3
 from datetime import datetime
@@ -46,15 +47,34 @@ def run_job_func(**kwargs):
         job_run_id : string type number like '1', '2', '3'
     :return:
     '''
-    # XCom에서 값을 가져옴
+    # Get Variables From XCom
+    ti = kwargs['ti']
     cluster_name = kwargs['cluster_name']
     prefix = 'cluster_' + cluster_name + '.'
-    virtual_cluster_id = kwargs['ti'].xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id',
-                                                key='return_value')['virtual_cluster_id']
     job_run_id = kwargs['id']
+    virtual_cluster_id = ti.xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id',
+                                      key='return_value')['virtual_cluster_id']
 
-    # Set Args
-    args = f'aws emr-containers start-job-run --cli-input-json file:///opt/airflow/config/{cluster_name}/job-run-{job_run_id}.json'.split()
+    # JSON 파일 경로
+    run_job_file_path = f'/opt/airflow/config/{cluster_name}/job-run-{job_run_id}.json'
+    # JSON 파일 로드
+    with open(run_job_file_path, 'r') as file:
+        job_run_config = json.load(file)
+
+    # S3 access key, secret key 추가
+    for app_config in job_run_config['configurationOverrides']['applicationConfiguration']:
+        if app_config['classification'] == 'spark-defaults':
+            app_config['properties']['spark.hadoop.fs.s3a.access.key'] = os.getenv('AWS_ACCESS_KEY_ID')
+            app_config['properties']['spark.hadoop.fs.s3a.secret.key'] = os.getenv('AWS_SECRET_ACCESS_KEY')
+
+    # 수정된 JSON 파일 저장
+    tmp_run_job_file_path = f'/tmp/job-run-{job_run_id}.json'
+    with open(tmp_run_job_file_path, 'w') as file:
+        json.dump(job_run_config, file)
+
+    # AWS CLI 명령어 실행
+    args = f"aws emr-containers start-job-run".split()
+    args.extend(["--cli-input-json", f'file://'+tmp_run_job_file_path])
     args.extend(["--virtual-cluster-id", virtual_cluster_id])
 
     # Run aws emr-containers start-job-run

@@ -8,7 +8,7 @@
       "entryPointArguments": [
         "dev-job-1", "one", "1", "mid-cluster-2", "job-1"
       ],
-      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --driver-memory 6G --driver-cores 1 --executor-memory 12G --executor-cores 3 --num-executors 4"
+      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --conf spark.dynamicAllocation.enabled=true --conf spark.dynamicAllocation.minExecutors=2 --conf spark.dynamicAllocation.maxExecutors=8"
     }
   },
   "configurationOverrides": {

@@ -6,7 +6,7 @@
     "sparkSubmitJobDriver": {
       "entryPoint": "local:///etl/src/run.py",
       "entryPointArguments": [
-        "dev-job-1", "one", "1", "mid-cluster-1", "job-1"
+        "mid-cluster-1-one-task1-job1", "one", "1", "mid-cluster-1", "job-1"
       ],
       "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 6G --num-executors 2"
     }

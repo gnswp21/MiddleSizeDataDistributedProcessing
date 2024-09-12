@@ -26,7 +26,9 @@ def delete_emr_virtual_cluster_func(**kwargs):
     :return:
     '''
     ti = kwargs['ti']
-    virtual_cluster_id = ti.xcom_pull(task_ids='get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
+    cluster_name = kwargs['cluster_name']
+    prefix = 'cluster_' + cluster_name + '.'
+    virtual_cluster_id = ti.xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
     args = 'aws emr-containers delete-virtual-cluster --id'.split()
     args.extend([virtual_cluster_id])
     result = subprocess.run(args=args, capture_output=True, text=True)

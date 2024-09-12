@@ -15,14 +15,16 @@ default_args = {
 }
 
 cluster_names = ['mid-cluster-1', 'mid-cluster-2', 'mid-cluster-3']
-ports = {'mid-cluster-1':19090, 'mid-cluster-2':29090, 'mid-cluster-3':39090}
+ports = ['19090', '29090', '39090']
 
 with DAG(dag_id='run_job_multi',
          description='run_job_dag',
          default_args=default_args,
          schedule_interval=None,
          catchup=False) as dag:
-    for cluster_name in cluster_names:
+    for i in range(3):
+        cluster_name = cluster_names[i]
+        port = ports[i]
         with TaskGroup(group_id=f'cluster_{cluster_name}') as cluster_group:
 
             get_emr_virtual_cluster_id = PythonOperator(
@@ -43,39 +45,39 @@ with DAG(dag_id='run_job_multi',
                 task_id='port_forward_start',
                 python_callable=set_port_forwarding,
                 provide_context=True,
-                op_kwargs={'cluster_name':cluster_name, 'port':ports[cluster_name]}
+                op_kwargs={'cluster_name':cluster_name, 'port': port}
             )
 
             # 포트 포워딩 시작 (데몬으로 실행)
             port_forward = BashOperator(
                 task_id='port_forward',
-                bash_command= f"kubectl port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {ports[cluster_name]}:9090 &>/dev/null &"
+                bash_command= f"kubectl port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &>/dev/null &"
             )
 
             test = BashOperator(
                 task_id='test',
-                bash_command= f"curl -G 'http://localhost:{ports[cluster_name]}/api/v1/query' --data-urlencode 'query=sum(rate(container_network_transmit_bytes_total[1h]))'"
+                bash_command= f"curl -G 'http://localhost:{port}/api/v1/query' --data-urlencode 'query=sum(rate(container_network_transmit_bytes_total[1h]))'"
             )
 
             # Run EMR on EKS Job
             run_job_1 = PythonOperator(
                 task_id='run_job_1',
                 python_callable=run_job_func,
-                op_kwargs={'id': '1', 'cluster_name':cluster_name},
+                op_kwargs={'id': '1', 'cluster_name': cluster_name},
                 provide_context=True
             )
 
             wait_job_1 = ShortCircuitOperator(
                 task_id='wait_job_1',
                 python_callable=wait_job_done,
-                op_kwargs={'id': '1', 'cluster_name':cluster_name},
+                op_kwargs={'id': '1', 'cluster_name': cluster_name},
                 provide_context=True
             )
 
             save_job_result_1 = PythonOperator(
                 task_id='save_job_result_1',
                 python_callable=save_job_result,
-                op_kwargs={'id': '1', 'cluster_name':cluster_name, 'port':ports[cluster_name]},
+                op_kwargs={'id': '1', 'cluster_name':cluster_name, 'port': port},
                 provide_context=True
             )
             #

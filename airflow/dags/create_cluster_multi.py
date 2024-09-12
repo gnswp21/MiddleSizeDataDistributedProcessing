@@ -9,26 +9,30 @@ default_args = {
 }
 
 cluster_names = ['mid-cluster-1', 'mid-cluster-2', 'mid-cluster-3']
-
+nodes =['2', '4', '8']
 with DAG(dag_id='create_multiple_clusters',
          description='create_multiple_clusters_dag',
          default_args=default_args,
          schedule_interval=None,
          catchup=False) as dag:
 
-    for cluster_name in cluster_names:
+    for i in range(3):
+        cluster_name = cluster_names[i]
+        node = nodes[i]
         with TaskGroup(group_id=f'cluster_{cluster_name}') as cluster_group:
             # Create EKS Cluster
             create_eks_cluster = BashOperator(
                 task_id=f'create_eks_cluster_{cluster_name}',
-                bash_command=f'eksctl create cluster --name {cluster_name} --with-oidc --instance-types=m5.xlarge --managed'
+                bash_command=f'eksctl create cluster --name {cluster_name} --with-oidc --instance-types=m5.xlarge'
+                             f' --managed --nodes={node}'
             )
 
             # Create IAM Identity Mapping
             create_iamidentitymapping = BashOperator(
                 task_id=f'create_iamidentitymapping_{cluster_name}',
-                bash_command=f'eksctl create iamidentitymapping --cluster {cluster_name} --service-name "emr-containers" '
-                             '--namespace default'
+                bash_command=f'eksctl create iamidentitymapping --cluster {cluster_name}'
+                             f' --service-name "emr-containers" '
+                             f' --namespace default'
             )
 
             # Update Trust Policy

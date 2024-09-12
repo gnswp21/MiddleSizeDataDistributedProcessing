@@ -1,7 +1,7 @@
 import string
 
 from pyspark.sql.functions import col, substring, udf
-from pyspark.sql.types import StringType, StructType, StructField, BooleanType
+from pyspark.sql.types import StringType, StructType, StructField, BooleanType, IntegerType
 from pyspark.sql import SparkSession
 from typing import Any, Dict
 import sys
@@ -19,10 +19,10 @@ def task1(df: DataFrame):
               .count()
               .sort('First'))
 
-    new_df.show()
+    return new_df
 
 
-def task2(df: DataFrame, broadcast_vocab):
+def task2(spark:SparkSession, df: DataFrame, broadcast_vocab):
     '''
     8 ~ 32 글자
     1개 이상의 대문자
@@ -73,42 +73,17 @@ def task2(df: DataFrame, broadcast_vocab):
         # 모든 조건을 통과하면 True
         return True
 
-    new_df = df.withColumn('StrongPassword', is_valid_password(col('value')))
-    new_df.show()
+    df = df.withColumn('StrongPassword', is_valid_password(col('value')))
+    true_count = df.filter(df.StrongPassword == True).count()
+    total_count = df.count()
 
-
-
-
-
-
-
-def run(kwargs: Dict[Any, Any]):
-    spark = SparkSession.builder.appName(f"{kwargs['job_name']}").getOrCreate()
-
-    # Set Logging    
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.info('Spark Session Build SUCCESS')
-
-    # Add custom dependency
-    spark.sparkContext.addPyFile("/etl/dependency_packages.zip")
-
-    # make dev dataset
-    data = [["123123"],["asdasd"], ["agfasdfasd"]]
-    schema = StructType([StructField("value", StringType(), True)])
+    data = [['StrongPassword', true_count], ['total',total_count]]
+    schema = StructType([
+        StructField("Type", StringType(), False),
+        StructField("Count", IntegerType(), False),
+    ])
     df = spark.createDataFrame(data=data, schema=schema)
-    task1(df)
-
-    # NLTK 사전 로드 (드라이버에서 한 번만 실행)
-    nltk.download('words')
-    english_vocab = set(words.words())
-    # 브로드캐스트 변수로 사전 전파
-    broadcast_vocab = spark.sparkContext.broadcast(english_vocab)
-    task2(df, broadcast_vocab)
-
-    spark.stop()
+    return df
 
 
-if __name__ == "__main__":
-    kwargs = dict(zip(["job_name"], sys.argv[1:]))
-    run(kwargs)
+

@@ -40,9 +40,9 @@ with DAG(dag_id='run_job_multi',
 
             )
 
-            # 포트 포워딩 시작 (데몬으로 실행)
-            port_forward_start = PythonOperator(
-                task_id='port_forward_start',
+            # eks kube config set
+            set_eks_config = PythonOperator(
+                task_id='set_eks_config',
                 python_callable=set_port_forwarding,
                 provide_context=True,
                 op_kwargs={'cluster_name':cluster_name, 'port': port}
@@ -52,11 +52,6 @@ with DAG(dag_id='run_job_multi',
             port_forward = BashOperator(
                 task_id='port_forward',
                 bash_command= f"kubectl port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &>/dev/null &"
-            )
-
-            test = BashOperator(
-                task_id='test',
-                bash_command= f"curl -G 'http://localhost:{port}/api/v1/query' --data-urlencode 'query=sum(rate(container_network_transmit_bytes_total[1h]))'"
             )
 
             # Run EMR on EKS Job
@@ -152,7 +147,7 @@ with DAG(dag_id='run_job_multi',
             #     op_kwargs={'id': '4'},
             #     provide_context=True
             # )
-            get_emr_virtual_cluster_id >> get_eks_arn >> port_forward_start >> port_forward >> \
+            get_emr_virtual_cluster_id >> get_eks_arn >> set_eks_config >> port_forward >> \
             run_job_1 >> wait_job_1 >> save_job_result_1 >> \
             port_forward_stop
     # run_job_2 >> wait_job_2 >> \

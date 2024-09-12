@@ -1,7 +1,7 @@
 import string
 
 from pyspark.sql.functions import col, substring, udf
-from pyspark.sql.types import StringType, StructType, StructField, BooleanType
+from pyspark.sql.types import StringType, StructType, StructField, BooleanType, IntegerType
 from pyspark.sql import SparkSession
 from typing import Any, Dict
 import sys
@@ -19,10 +19,10 @@ def task1(df: DataFrame):
               .count()
               .sort('First'))
 
-    new_df.show()
+    return new_df
 
 
-def task2(df: DataFrame, broadcast_vocab):
+def task2(spark:SparkSession, df: DataFrame, broadcast_vocab):
     '''
     8 ~ 32 글자
     1개 이상의 대문자
@@ -73,5 +73,17 @@ def task2(df: DataFrame, broadcast_vocab):
         # 모든 조건을 통과하면 True
         return True
 
-    new_df = df.withColumn('StrongPassword', is_valid_password(col('value')))
-    new_df.show()
+    df = df.withColumn('StrongPassword', is_valid_password(col('value')))
+    true_count = df.filter(df.StrongPassword == True).count()
+    total_count = df.count()
+
+    data = [['StrongPassword', true_count], ['total',total_count]]
+    schema = StructType([
+        StructField("Type", StringType(), False),
+        StructField("Count", IntegerType(), False),
+    ])
+    df = spark.createDataFrame(data=data, schema=schema)
+    return df
+
+
+

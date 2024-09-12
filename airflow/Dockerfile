@@ -32,10 +32,11 @@ RUN ARCH=amd64 && \
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
     chmod 700 get_helm.sh && \
     ./get_helm.sh
+RUN helm repo add prometheus-community https://prometheus-community.github.io/helm-charts && helm repo update
 
-RUN mkdir -p /usr/sbin/.kube && chmod 777 /usr/sbin/.kube
-RUN mkdir -p /usr/sbin/.config && chmod 777 /usr/sbin/.config
-RUN mkdir -p /usr/sbin/.cache && chmod 777 /usr/sbin/.cache
+#RUN mkdir -p /usr/sbin/.kube && chmod 777 /usr/sbin/.kube
+#RUN mkdir -p /usr/sbin/.config && chmod 777 /usr/sbin/.config
+#RUN mkdir -p /usr/sbin/.cache && chmod 777 /usr/sbin/.cache
 
 # Give airflow user access to binaries
 RUN chown -R airflow /usr/local/bin /usr/local/aws-cli

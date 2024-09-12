@@ -242,7 +242,7 @@ def save_job_result(**kwargs):
     print(f"Data successfully uploaded to s3://{s3_bucket_name}/{s3_key}")
 
 
-def set_port_forwarding(**kwargs):
+def set_eks_config(**kwargs):
     ti = kwargs['ti']
     cluster_name = kwargs['cluster_name']
     eks_arn = ti.xcom_pull(task_ids='cluster_'+cluster_name+'.get_eks_arn', key='return_value')

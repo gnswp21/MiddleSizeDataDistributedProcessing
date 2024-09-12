@@ -8,7 +8,7 @@
       "entryPointArguments": [
         "mid-cluster-1-one-task1-job3", "all", "1", "mid-cluster-1", "job-3"
       ],
-      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 6G --num-executors 2"
+      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
     }
   },
   "configurationOverrides": {

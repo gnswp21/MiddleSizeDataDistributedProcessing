@@ -33,10 +33,14 @@ docker tag emr6.5_mid 691487686124.dkr.ecr.ap-northeast-2.amazonaws.com/emr6.5_m
 docker push 691487686124.dkr.ecr.ap-northeast-2.amazonaws.com/emr6.5_mid_repo
 ```
 
+```commandline
+aws emr-containers cancel-job-run --id 000000034f6mnteee5j --virtual-cluster-id se226gu82ajs1xmznku5vvu41
+```
+
 
 # 푸시파일 to airflow
 ```commandline
-pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/config/job-run.json ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/config/job-run.json
+pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/config/mid-cluster-1/job-run-3.json ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/config/mid-cluster-1/job-run-3.json
 pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/dags/run_job.py ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/dags
 ```
 

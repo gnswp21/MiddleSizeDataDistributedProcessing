@@ -34,11 +34,14 @@ def run(kwargs: Dict[Any, Any]):
     # Get Dataset From S3
     df = None
     if dataset == 'one':
-        path = bucket + 'data/Z.txt'
+        path = bucket + 'data/1.txt'
         df = spark.read.text(paths=path)
     elif dataset == 'all':
-        path = bucket + 'data'
-        df = spark.read.text(paths=path)
+        paths = []
+        for tar in '0123456789A':
+            path = bucket + 'data/' + tar +'.txt'
+            paths.append(path)
+        df = spark.read.text(paths=paths)
     else:
         logging.warnning('!!! USE Correct Dataset')
         data = [["1234567890"],["abdedfg"], ["!@#$"]]

@@ -203,7 +203,6 @@ def save_job_result(**kwargs):
     spend_time = int((dt2 - dt1).total_seconds())
 
     # DataFrame Cluster, Job Name
-    cluster_name = 'c1'
     job_name = run_job_id
 
     # CPU
@@ -224,7 +223,7 @@ def save_job_result(**kwargs):
     # save results to s3
     s3 = boto3.client('s3')
     s3_bucket_name = 'middle-dataset'  # S3 버킷 이름
-    s3_key = f'results/{virtual_cluster_id}/resource_usage.csv'  # S3에 저장될 파일 경로
+    s3_key = f'results/{cluster_name}/{virtual_cluster_id}/resource_usage.csv'  # S3에 저장될 파일 경로
 
     new_row = pd.DataFrame({
         'Cluster Name': [cluster_name],

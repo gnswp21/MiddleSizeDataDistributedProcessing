@@ -31,21 +31,14 @@ with DAG(dag_id='delete_cluster_multi',
             delete_emr_virtual_cluster = PythonOperator(
                 task_id='delete_emr_virtual_cluster',
                 python_callable=delete_emr_virtual_cluster_func,
-                op_kwargs={'cluster_name':cluster_name},
+                op_kwargs={'cluster_name': cluster_name},
                 provide_context=True
             )
 
-            # Update k8s config
-            update_k8s_config = BashOperator(
-                task_id='update_k8s_config',
-                bash_command=f"aws eks update-kubeconfig --name {cluster_name} --kubeconfig ./{cluster_name}_config"
-            )
-
-
-            # Delete EMR Virtual Cluster
+            # Delete EMR Virtual Cluster (aws cli 기반)
             delete_eks_cluster = BashOperator(
                 task_id='delete_eks_cluster',
-                bash_command=f'eksctl delete cluster --name {cluster_name} --kubeconfig ./{cluster_name}_config'
+                bash_command=f'eksctl delete cluster --name {cluster_name} '
             )
 
-            get_emr_virtual_cluster_id >> update_k8s_config >> delete_emr_virtual_cluster >> delete_eks_cluster
+            get_emr_virtual_cluster_id >>  delete_emr_virtual_cluster >> delete_eks_cluster

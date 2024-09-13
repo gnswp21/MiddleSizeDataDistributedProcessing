@@ -1,7 +1,7 @@
 import string
 
 from pyspark.sql.functions import col, substring, udf
-from pyspark.sql.types import StringType, StructType, StructField, BooleanType, IntegerType
+from pyspark.sql.types import StringType, StructType, StructField, BooleanType, IntegerType, LongType
 from pyspark.sql import SparkSession
 from typing import Any, Dict
 import sys
@@ -80,7 +80,7 @@ def task2(spark:SparkSession, df: DataFrame, broadcast_vocab):
     data = [['StrongPassword', true_count], ['total',total_count]]
     schema = StructType([
         StructField("Type", StringType(), False),
-        StructField("Count", IntegerType(), False),
+        StructField("Count", LongType(), False),
     ])
     df = spark.createDataFrame(data=data, schema=schema)
     return df

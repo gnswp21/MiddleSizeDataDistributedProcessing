@@ -139,7 +139,10 @@ def save_job_result(**kwargs):
         # 응답 결과 처리
         if response.status_code == 200:
             data = response.json()
-            usage = data['data']['result']['value'][1]
+            if "data" in data and "result" in data["data"]:
+                for result in data["data"]["result"]:
+                    # value 배열의 두 번째 인자 (CPU 사용률)를 추출
+                    usage = result["value"][1]
         else:
             print(response.json())
 

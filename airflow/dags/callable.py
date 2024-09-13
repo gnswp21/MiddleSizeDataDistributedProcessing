@@ -146,7 +146,7 @@ def save_job_result(**kwargs):
         else:
             print(response.json())
 
-        return round(usage, 4)
+        return str(round(float(usage), 4))
 
     # 파일이 존재하는지 확인하는 함수
     def check_file_exists(bucket, key):

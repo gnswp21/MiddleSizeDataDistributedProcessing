@@ -205,10 +205,21 @@ def save_job_result(**kwargs):
     # DataFrame Cluster, Job Name
     job_name = run_job_id
 
-    # CPU
-    cpu_usage_query = f'100 * (1 - avg(rate(node_cpu_seconds_total{{mode="idle"}}[{spend_time}s])))'
-    cpu_usage = get_usage(cpu_usage_query)
-    print(cpu_usage, '%')
+    # Avg CPU rate
+    avg_cpu_usage_query = f'100 * (1 - avg(rate(node_cpu_seconds_total{{mode="idle"}}[{spend_time}s])))'
+    avg_cpu_usage = get_usage(avg_cpu_usage_query)
+    print(avg_cpu_usage, '%')
+
+
+    # Max CPU Rate
+    max_cpu_usage_query = f'100 * (1 - max(rate(node_cpu_seconds_total{{mode="idle"}}[{spend_time}s])))'
+    max_cpu_usage = get_usage(max_cpu_usage_query)
+    print(max_cpu_usage, '%')
+
+    # CPU USAGE
+    node_num = pow(2, int(cluster_name[-1]))
+    core_num = 4
+    vcpu_usage = core_num * node_num * avg_cpu_usage * spend_time
 
     # Network IO
     network_IO_usage_query = f'sum(rate(container_network_transmit_bytes_total[{spend_time}s])) + sum(rate(container_network_receive_bytes_total[{spend_time}s]))'
@@ -220,7 +231,18 @@ def save_job_result(**kwargs):
     memory_usage = get_usage(memory_usage_query)
     print(memory_usage, 'bytes')
 
-    # save results to s3
+    # Avg Memory Rate
+    avg_memory_rate_usage_query = f'100 * avg(avg_over_time(container_memory_usage_bytes[{spend_time}s])) / avg(container_spec_memory_limit_bytes)'
+    avg_memory_rate_usage = get_usage(avg_memory_rate_usage_query)
+    print(avg_memory_rate_usage, '%')
+
+    # Max Memory Rate
+    max_memory_rate_usage_query = f'100 * max_over_time(container_memory_usage_bytes[{spend_time}s]) / avg(container_spec_memory_limit_bytes)'
+    max_memory_rate_usage = get_usage(max_memory_rate_usage_query)
+    print(max_memory_rate_usage, '%')
+
+
+# save results to s3
     s3 = boto3.client('s3')
     s3_bucket_name = 'middle-dataset'  # S3 버킷 이름
     s3_key = f'results/{cluster_name}/{virtual_cluster_id}/resource_usage.csv'  # S3에 저장될 파일 경로
@@ -229,9 +251,13 @@ def save_job_result(**kwargs):
         'Cluster Name': [cluster_name],
         'Job Name': [job_name],
         'Spend Time': [spend_time],
-        'CPU Usage': [cpu_usage],
-        'Network IO Usage': [network_IO_usage],
-        'Memory Usage': [memory_usage],
+        'AVG CPU (%)': [avg_cpu_usage],
+        'MAX CPU (%)': [max_cpu_usage],
+        'Total vCPU Usage (s)': [vcpu_usage],
+        'AVG Memory Rate (%)': [avg_memory_rate_usage],
+        'MAX Memory Rate (%)': [max_memory_rate_usage],
+        'Total Memory Usage (Byte)': [memory_usage],
+        'Network IO (Byte)': [network_IO_usage],
     })
 
     # S3에 파일이 존재하는지 확인

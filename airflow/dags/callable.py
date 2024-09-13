@@ -217,7 +217,7 @@ def save_job_result(**kwargs):
     # CPU USAGE
     node_num = pow(2, int(cluster_name[-1]))
     core_num = 4
-    vcpu_usage = core_num * node_num * avg_cpu_usage * spend_time
+    vcpu_usage = round(core_num * node_num * float(avg_cpu_usage) * int(spend_time), 4)
 
     # Memory
     memory_usage_query = f'sum(avg_over_time(container_memory_usage_bytes[{spend_time}s]))'

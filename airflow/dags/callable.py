@@ -29,7 +29,8 @@ def delete_emr_virtual_cluster_func(**kwargs):
     ti = kwargs['ti']
     cluster_name = kwargs['cluster_name']
     prefix = 'cluster_' + cluster_name + '.'
-    virtual_cluster_id = ti.xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
+    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + 'get_emr_virtual_cluster_id', key='return_value')[
+        'virtual_cluster_id']
     args = 'aws emr-containers delete-virtual-cluster --id'.split()
     args.extend([virtual_cluster_id])
     result = subprocess.run(args=args, capture_output=True, text=True)
@@ -52,7 +53,7 @@ def run_job_func(**kwargs):
     cluster_name = kwargs['cluster_name']
     prefix = 'cluster_' + cluster_name + '.'
     job_run_id = kwargs['id']
-    virtual_cluster_id = ti.xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id',
+    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + 'get_emr_virtual_cluster_id',
                                       key='return_value')['virtual_cluster_id']
 
     # JSON 파일 경로
@@ -74,7 +75,7 @@ def run_job_func(**kwargs):
 
     # AWS CLI 명령어 실행
     args = f"aws emr-containers start-job-run".split()
-    args.extend(["--cli-input-json", f'file://'+tmp_run_job_file_path])
+    args.extend(["--cli-input-json", f'file://' + tmp_run_job_file_path])
     args.extend(["--virtual-cluster-id", virtual_cluster_id])
 
     # Run aws emr-containers start-job-run
@@ -95,9 +96,10 @@ def wait_job_done(**kwargs):
     ti = kwargs['ti']
     cluster_name = kwargs['cluster_name']
     prefix = 'cluster_' + cluster_name + '.'
-    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + "get_emr_virtual_cluster_id", key='return_value')['virtual_cluster_id']
+    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + "get_emr_virtual_cluster_id", key='return_value')[
+        'virtual_cluster_id']
     run_job_task_ids = 'run_job_' + kwargs['id']
-    job_id = ti.xcom_pull(task_ids=prefix+run_job_task_ids, key='return_value')['job_id']
+    job_id = ti.xcom_pull(task_ids=prefix + run_job_task_ids, key='return_value')['job_id']
     args = ['aws', 'emr-containers', 'describe-job-run', '--id', job_id, '--virtual-cluster-id', virtual_cluster_id]
     while True:
         result = subprocess.run(args=args, capture_output=True, text=True)
@@ -137,16 +139,11 @@ def save_job_result(**kwargs):
         # 응답 결과 처리
         if response.status_code == 200:
             data = response.json()
-
-            # data.result에서 value의 두 번째 인자만 추출
-            if "data" in data and "result" in data["data"]:
-                for result in data["data"]["result"]:
-                    # value 배열의 두 번째 인자 (CPU 사용률)를 추출
-                    usage = result["value"][1]
+            usage = data['data']['result']['value'][1]
         else:
             print(response.json())
 
-        return usage
+        return round(usage, 4)
 
     # 파일이 존재하는지 확인하는 함수
     def check_file_exists(bucket, key):
@@ -178,8 +175,6 @@ def save_job_result(**kwargs):
         df.to_csv(csv_buffer, index=False)
         s3.put_object(Bucket=bucket, Key=key, Body=csv_buffer.getvalue())
 
-
-
     # Get Xcom Variables
     ti = kwargs['ti']
     id = kwargs['id']
@@ -192,11 +187,12 @@ def save_job_result(**kwargs):
     prefix = 'cluster_' + cluster_name + '.'
     run_job_id = 'run_job_' + id
     wait_job_task_id = 'wait_job_' + id
-    virtual_cluster_id = ti.xcom_pull(task_ids=prefix+'get_emr_virtual_cluster_id', key='return_value')['virtual_cluster_id']
+    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + 'get_emr_virtual_cluster_id', key='return_value')[
+        'virtual_cluster_id']
 
     # Spend Time, Convert strings to datetime objects
-    created_at = ti.xcom_pull(task_ids=prefix+wait_job_task_id, key='createdAt')
-    finished_at = ti.xcom_pull(task_ids=prefix+wait_job_task_id, key='finishedAt')
+    created_at = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='createdAt')
+    finished_at = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='finishedAt')
     time_format = "%Y-%m-%dT%H:%M:%S%z"
     dt1 = datetime.strptime(created_at, time_format)
     dt2 = datetime.strptime(finished_at, time_format)
@@ -210,7 +206,6 @@ def save_job_result(**kwargs):
     avg_cpu_usage = get_usage(avg_cpu_usage_query)
     print(avg_cpu_usage, '%')
 
-
     # Max CPU Rate
     max_cpu_usage_query = f'100 * (1 - max(rate(node_cpu_seconds_total{{mode="idle"}}[{spend_time}s])))'
     max_cpu_usage = get_usage(max_cpu_usage_query)
@@ -221,28 +216,27 @@ def save_job_result(**kwargs):
     core_num = 4
     vcpu_usage = core_num * node_num * avg_cpu_usage * spend_time
 
-    # Network IO
-    network_IO_usage_query = f'sum(rate(container_network_transmit_bytes_total[{spend_time}s])) + sum(rate(container_network_receive_bytes_total[{spend_time}s]))'
-    network_IO_usage = get_usage(network_IO_usage_query)
-    print(network_IO_usage, 'bytes')
-
     # Memory
     memory_usage_query = f'sum(avg_over_time(container_memory_usage_bytes[{spend_time}s]))'
     memory_usage = get_usage(memory_usage_query)
     print(memory_usage, 'bytes')
 
     # Avg Memory Rate
-    avg_memory_rate_usage_query = f'100 * avg(avg_over_time(container_memory_usage_bytes[{spend_time}s])) / avg(container_spec_memory_limit_bytes)'
+    avg_memory_rate_usage_query = f'100 * avg(avg_over_time(node_memory_Active_bytes[{spend_time}s])) / avg(node_memory_MemTotal_bytes)'
     avg_memory_rate_usage = get_usage(avg_memory_rate_usage_query)
     print(avg_memory_rate_usage, '%')
 
     # Max Memory Rate
-    max_memory_rate_usage_query = f'100 * max_over_time(container_memory_usage_bytes[{spend_time}s]) / avg(container_spec_memory_limit_bytes)'
+    max_memory_rate_usage_query = f'100 * max(max_over_time(node_memory_Active_bytes[{spend_time}s])) / avg(node_memory_MemTotal_bytes)'
     max_memory_rate_usage = get_usage(max_memory_rate_usage_query)
     print(max_memory_rate_usage, '%')
 
+    # Network IO
+    network_IO_usage_query = f'sum(rate(node_network_transmit_bytes_total[{spend_time}s])) + sum(rate(node_network_receive_bytes_total[{spend_time}s]))'
+    network_IO_usage = get_usage(network_IO_usage_query)
+    print(network_IO_usage, 'bytes')
 
-# save results to s3
+    # save results to s3
     s3 = boto3.client('s3')
     s3_bucket_name = 'middle-dataset'  # S3 버킷 이름
     s3_key = f'results/{cluster_name}/{virtual_cluster_id}/resource_usage.csv'  # S3에 저장될 파일 경로
@@ -250,7 +244,7 @@ def save_job_result(**kwargs):
     new_row = pd.DataFrame({
         'Cluster Name': [cluster_name],
         'Job Name': [job_name],
-        'Spend Time': [spend_time],
+        'Spend Time (s)': [spend_time],
         'AVG CPU (%)': [avg_cpu_usage],
         'MAX CPU (%)': [max_cpu_usage],
         'Total vCPU Usage (s)': [vcpu_usage],
@@ -290,7 +284,7 @@ def save_job_result(**kwargs):
 def set_eks_config(**kwargs):
     ti = kwargs['ti']
     cluster_name = kwargs['cluster_name']
-    eks_arn = ti.xcom_pull(task_ids='cluster_'+cluster_name+'.get_eks_arn', key='return_value')
+    eks_arn = ti.xcom_pull(task_ids='cluster_' + cluster_name + '.get_eks_arn', key='return_value')
     port = kwargs['port']
 
     # kubeconfig 업데이트

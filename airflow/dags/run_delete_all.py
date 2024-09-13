@@ -97,8 +97,6 @@ with DAG(dag_id='run_to_delete',
             get_emr_virtual_cluster_id >> delete_emr_virtual_cluster >> delete_eks_cluster
 
             # create clusters
-            create_eks_cluster >> create_iamidentitymapping >> update_trust_policy >> \
-            create_emr_virtual_cluster >> add_kube_prometheus_stack >> \
             get_emr_virtual_cluster_id >> get_eks_arn >> get_kubeconfig >> port_forward >> \
             run_job_1 >> wait_job_1 >> save_job_result_1 >> \
             run_job_2 >> wait_job_2 >> save_job_result_2 >> \

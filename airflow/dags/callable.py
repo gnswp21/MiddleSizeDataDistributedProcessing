@@ -210,7 +210,7 @@ def save_job_result(**kwargs):
     print(avg_cpu_usage, '%')
 
     # Max CPU Rate
-    max_cpu_usage_query = f'100 * (1 - max(rate(node_cpu_seconds_total{{mode="idle"}}[{spend_time}s])))'
+    max_cpu_usage_query = f'100 * (1 - min(rate(node_cpu_seconds_total{{mode="idle"}}[{spend_time}s])))'
     max_cpu_usage = get_usage(max_cpu_usage_query)
     print(max_cpu_usage, '%')
 
@@ -218,6 +218,7 @@ def save_job_result(**kwargs):
     node_num = pow(2, int(cluster_name[-1]))
     core_num = 4
     vcpu_usage = round(core_num * node_num * float(avg_cpu_usage) * int(spend_time), 4)
+    print('vcpu_usage', vcpu_usage)
 
     # Memory
     memory_usage_query = f'sum(avg_over_time(container_memory_usage_bytes[{spend_time}s]))'
@@ -225,12 +226,12 @@ def save_job_result(**kwargs):
     print(memory_usage, 'bytes')
 
     # Avg Memory Rate
-    avg_memory_rate_usage_query = f'100 * avg(avg_over_time(node_memory_Active_bytes[{spend_time}s])) / avg(node_memory_MemTotal_bytes)'
+    avg_memory_rate_usage_query = f'100 * (1 -avg(avg_over_time(node_memory_MemAvailable_bytes[{spend_time}]))/avg(node_memory_MemTotal_bytes))'
     avg_memory_rate_usage = get_usage(avg_memory_rate_usage_query)
     print(avg_memory_rate_usage, '%')
 
     # Max Memory Rate
-    max_memory_rate_usage_query = f'100 * max(max_over_time(node_memory_Active_bytes[{spend_time}s])) / avg(node_memory_MemTotal_bytes)'
+    max_memory_rate_usage_query = f'100 * (1 - min(min_over_time(node_memory_MemAvailable_bytes[{spend_time}s]))/avg(node_memory_MemTotal_bytes))'
     max_memory_rate_usage = get_usage(max_memory_rate_usage_query)
     print(max_memory_rate_usage, '%')
 

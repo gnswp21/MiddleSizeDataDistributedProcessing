@@ -2,8 +2,8 @@ from airflow.utils.task_group import TaskGroup
 from airflow.dags.callable.callable import *
 from airflow import DAG
 from airflow.operators.bash import BashOperator
+from datetime import datetime
 from airflow.operators.python import PythonOperator, ShortCircuitOperator
-from utils.callables import *
 
 default_args = {
     'owner': 'airflow',
@@ -20,7 +20,7 @@ with DAG(dag_id='run_job_multi',
          catchup=False) as dag:
 
     def create_job_operators(cluster_name, port, job_id):
-        from utils.callables import save_job_result
+        from airflow.dags.callable.callable import save_job_result
         run_job = PythonOperator(
             task_id=f'run_job_{job_id}',
             python_callable=run_job_func,

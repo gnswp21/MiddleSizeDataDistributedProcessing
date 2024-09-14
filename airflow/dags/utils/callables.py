@@ -3,15 +3,18 @@ import subprocess
 import boto3
 from datetime import datetime
 import json
+from common import  *
 
 
 def get_emr_virtual_cluster_id_by_bash(**kwargs):
     cluster_name = kwargs['cluster_name']
     emr_virtual_cluster_name = f'{cluster_name}_emr_virtual_cluster'
-    args = "aws emr-containers list-virtual-clusters --region ap-northeast-2 --query".split()
-    args.append(f"virtualClusters[?name==`{emr_virtual_cluster_name}` && state==`RUNNING`].id")
-    print(args)
-    result = subprocess.run(args=args, capture_output=True, text=True)
+    args = "aws emr-containers list-virtual-clusters --region ap-northeast-2"\
+           f" --query virtualClusters[?name==`{emr_virtual_cluster_name}` && state==`RUNNING`].id"
+
+    # run
+    result = subprocess.run(args=args, shell=True,  capture_output=True, text=True)
+    print_subprocess_result(result)
     if result.stdout:
         case = result.stdout.strip()
         virtual_cluster_id = case[1:-1].strip()[1:-1]
@@ -19,111 +22,84 @@ def get_emr_virtual_cluster_id_by_bash(**kwargs):
 
 
 def delete_emr_virtual_cluster_func(**kwargs):
-    # XCom에서 값을 가져옴
-    '''
-
-    :param kwargs:
-        ti: task instance given by xcom
-    :return:
-    '''
-    ti = kwargs['ti']
-    cluster_name = kwargs['cluster_name']
-    prefix = 'cluster_' + cluster_name + '.'
-    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + 'get_emr_virtual_cluster_id', key='return_value')[
-        'virtual_cluster_id']
-    args = 'aws emr-containers delete-virtual-cluster --id'.split()
-    args.extend([virtual_cluster_id])
-    result = subprocess.run(args=args, capture_output=True, text=True)
-    if result.stdout:
-        print(result.stdout)
-
-    if result.stderr:
-        print(result.stderr)
+    virtual_cluster_id = get_virtual_cluster_id(**kwargs)
+    args = f'aws emr-containers delete-virtual-cluster --id {virtual_cluster_id}'
+    result = subprocess.run(args=args, shell=True, capture_output=True, text=True)
+    print_subprocess_result(result)
 
 
 def run_job_func(**kwargs):
-    '''
-    :param kwargs:
-        ti: task instance given by xcom
-        job_run_id : string type number like '1', '2', '3'
-    :return:
-    '''
     # Get Variables From XCom
-    ti = kwargs['ti']
     cluster_name = kwargs['cluster_name']
-    prefix = 'cluster_' + cluster_name + '.'
-    job_run_id = kwargs['id']
-    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + 'get_emr_virtual_cluster_id',
-                                      key='return_value')['virtual_cluster_id']
+    job_run_id = 'job-'+kwargs['id']
+    virtual_cluster_id = get_virtual_cluster_id(**kwargs)
+    tuning_id = kwargs['params'].get('tuning_id', 1)
 
-    # JSON 파일 경로
-    run_job_file_path = f'/opt/airflow/config/{cluster_name}/job-run-{job_run_id}.json'
-    # JSON 파일 로드
-    with open(run_job_file_path, 'r') as file:
-        job_run_config = json.load(file)
-
-    # S3 access key, secret key 추가
-    for app_config in job_run_config['configurationOverrides']['applicationConfiguration']:
-        if app_config['classification'] == 'spark-defaults':
-            app_config['properties']['spark.hadoop.fs.s3a.access.key'] = os.getenv('AWS_ACCESS_KEY_ID')
-            app_config['properties']['spark.hadoop.fs.s3a.secret.key'] = os.getenv('AWS_SECRET_ACCESS_KEY')
-
-    # 수정된 JSON 파일 저장
-    tmp_run_job_file_path = f'/tmp/job-run-{job_run_id}.json'
-    with open(tmp_run_job_file_path, 'w') as file:
-        json.dump(job_run_config, file)
+    # tmp job_run_json
+    tmp_job_run_json_path = modify_job_run_json(tuning_id, cluster_name, job_run_id)
 
     # AWS CLI 명령어 실행
-    args = f"aws emr-containers start-job-run".split()
-    args.extend(["--cli-input-json", f'file://' + tmp_run_job_file_path])
-    args.extend(["--virtual-cluster-id", virtual_cluster_id])
+    args = f"aws emr-containers start-job-run "\
+           f"--cli-input-json file://{tmp_job_run_json_path} "\
+           f"--virtual-cluster-id {virtual_cluster_id}"
 
     # Run aws emr-containers start-job-run
-    result = subprocess.run(args=args, capture_output=True, text=True)
-
+    result = subprocess.run(args=args, shell=True, capture_output=True, text=True)
+    print_subprocess_result(result)
     # Check Result
     if result.stdout:
-        print(result.stdout)
         data = json.loads(result.stdout)
-        job_id = data.get('id')
-        return {'job_id': job_id}
-    if result.stderr:
-        print(result.stderr)
+        return {'job_id': data['id']}
 
 
 def wait_job_done(**kwargs):
     import time
-    ti = kwargs['ti']
-    cluster_name = kwargs['cluster_name']
-    prefix = 'cluster_' + cluster_name + '.'
-    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + "get_emr_virtual_cluster_id", key='return_value')[
-        'virtual_cluster_id']
-    run_job_task_ids = 'run_job_' + kwargs['id']
-    job_id = ti.xcom_pull(task_ids=prefix + run_job_task_ids, key='return_value')['job_id']
-    args = ['aws', 'emr-containers', 'describe-job-run', '--id', job_id, '--virtual-cluster-id', virtual_cluster_id]
-    while True:
+    def check_job_run():
+        args = ['aws', 'emr-containers', 'describe-job-run', '--id', job_id, '--virtual-cluster-id', virtual_cluster_id]
         result = subprocess.run(args=args, capture_output=True, text=True)
         if result.stdout:
             print(result.stdout)
             data = json.loads(result.stdout)
             state = data.get('jobRun').get('state')
             if state == "FAILED" or state == "CANCELLED":
-                print(state)
-                print('HERE 1', state, state == "FAILED", state == "CANCELLED")
-                return False
+                return "STOPPED"
             elif state == "COMPLETED":
                 createdAt = data.get('jobRun').get('createdAt')
                 finishedAt = data.get('jobRun').get('finishedAt')
                 ti.xcom_push(key="createdAt", value=createdAt)
                 ti.xcom_push(key="finishedAt", value=finishedAt)
-                return True
+                return "COMPLETED"
             else:
-                time.sleep(60)
-                continue
+                return "RUNNING"
         if result.stderr:
             print(result.stderr)
-            print('HERE 2')
-            return False
+            return "ERROR"
+    def check_eks_pending():
+        args = f'kubectl --kubeconfig /tmp/{cluster_name}_config ' \
+               'get pods -o custom-columns=NAME:.metadata.name | grep exec- | wc -l'
+        total_executor = subprocess.run(args=args, shell=True, capture_output=True, text=True)
+
+        args = f'kubectl --kubeconfig /tmp/{cluster_name}_config ' \
+               'get pods --field-selector=status.phase=Pending -o custom-columns=NAME:.metadata.name | grep exec- | wc -l'
+        pending_executor = subprocess.run(args=args, shell=True, capture_output=True, text=True)
+
+        return pending_executor, total_executor
+
+    ti = kwargs['ti']
+    cluster_name = ti['cluster_name']
+    virtual_cluster_id = get_virtual_cluster_id(**kwargs)
+    job_id = get_job_id(**kwargs)
+
+    pending_executor, total_executor = 0, 0
+    while True:
+        state = check_job_run()
+        if state =='RUNNING':
+            pending_executor, total_executor = check_eks_pending()
+            ti.xcom_push(key="pending_executor", value=pending_executor)
+            ti.xcom_push(key="total_executor", value=total_executor)
+        elif state=='COMPLETED':
+            return
+        time.sleep(60)
 
 
 def save_job_result(**kwargs):
@@ -147,7 +123,6 @@ def save_job_result(**kwargs):
             print(response.json())
 
         return str(round(float(usage), 4))
-
     # 파일이 존재하는지 확인하는 함수
     def check_file_exists(bucket, key):
         try:
@@ -240,6 +215,10 @@ def save_job_result(**kwargs):
     network_IO_usage = get_usage(network_IO_usage_query)
     print(network_IO_usage, 'bytes')
 
+    # executor
+    pending_executor = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='pending_executor')
+    total_executor = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='total_executor')
+
     # save results to s3
     s3 = boto3.client('s3')
     s3_bucket_name = 'middle-dataset'  # S3 버킷 이름
@@ -256,6 +235,8 @@ def save_job_result(**kwargs):
         'MAX Memory Rate (%)': [max_memory_rate_usage],
         'Total Memory Usage (Byte)': [memory_usage],
         'Network IO (Byte)': [network_IO_usage],
+        'Pending Executor': [pending_executor],
+        'Total Executor': [total_executor]
     })
 
     # S3에 파일이 존재하는지 확인
@@ -285,44 +266,3 @@ def save_job_result(**kwargs):
     print(f"Data successfully uploaded to s3://{s3_bucket_name}/{s3_key}")
 
 
-def set_eks_config(**kwargs):
-    ti = kwargs['ti']
-    cluster_name = kwargs['cluster_name']
-    eks_arn = ti.xcom_pull(task_ids='cluster_' + cluster_name + '.get_eks_arn', key='return_value')
-    port = kwargs['port']
-
-    # kubeconfig 업데이트
-    args = f"aws eks update-kubeconfig --name {cluster_name}"
-    print(args)
-    result = subprocess.run(args, shell=True, capture_output=True, text=True)
-    if result.stdout:
-        print(result.stdout)
-    if result.stderr:
-        print('Error:', result.stderr)
-
-    # 포트에서 실행 중인 프로세스 종료 (sudo 권한이 없다면 sudo를 제외)
-    # args = f"lsof -t -i:{port} | xargs kill -9"
-    # print(args)
-    # result = subprocess.run(args, shell=True, capture_output=True, text=True)
-    # if result.stdout:
-    #     print(result.stdout)
-    # if result.stderr:
-    #     print('Error:', result.stderr)
-
-    # 포트 포워딩 실행
-    # args = f"kubectl --context {eks_arn} port-forward prometheus-monitoring-{cluster_name}-k-prometheus-0 {port}:9090 &>/dev/null &"
-    # print(args)
-    # result = subprocess.run(args, shell=True, capture_output=True, text=True)
-    # if result.stdout:
-    #     print(result.stdout)
-    # if result.stderr:
-    #     print('Error:', result.stderr)
-
-    # Prometheus 쿼리 실행
-    # args = f"curl -G 'http://localhost:{port}/api/v1/query' --data-urlencode 'query=sum(rate(container_network_transmit_bytes_total[1h]))'"
-    # print(args)
-    # result = subprocess.run(args, shell=True, capture_output=True, text=True)
-    # if result.stdout:
-    #     print(result.stdout)
-    # if result.stderr:
-    #     print('Error:', result.stderr)

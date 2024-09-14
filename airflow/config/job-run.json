@@ -4,11 +4,7 @@
   "releaseLabel": "emr-6.5.0-latest",
   "jobDriver": {
     "sparkSubmitJobDriver": {
-      "entryPoint": "local:///etl/src/run.py",
-      "entryPointArguments": [
-        "mid-cluster-2-one-task1-job3", "all", "1", "mid-cluster-2", "job-3"
-      ],
-      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 4"
+      "entryPoint": "local:///etl/src/run.py"
     }
   },
   "configurationOverrides": {

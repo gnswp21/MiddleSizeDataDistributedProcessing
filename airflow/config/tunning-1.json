@@ -1,0 +1,66 @@
+{
+  "mid-cluster-1":{
+    "job-1": {
+      "entryPointArguments": ["mid-cluster-1-one-task1-job1", "one", "1", "mid-cluster-1", "job-1"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    },
+
+    "job-2": {
+      "entryPointArguments": [ "mid-cluster-1-one-task2-job1", "one", "2", "mid-cluster-1", "job-2"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    },
+
+    "job-3": {
+      "entryPointArguments": ["mid-cluster-1-one-task1-job3", "all", "1", "mid-cluster-1", "job-3"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    },
+
+    "job-4": {
+      "entryPointArguments": ["mid-cluster-1-one-task1-job1", "one", "1", "mid-cluster-1", "job-1"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    }
+  },
+  "mid-cluster-2":{
+    "job-1": {
+      "entryPointArguments": ["mid-cluster-2-one-task1-job1", "one", "1", "mid-cluster-1", "job-1"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    },
+
+    "job-2": {
+      "entryPointArguments": [ "mid-cluster-2-one-task2-job2", "one", "2", "mid-cluster-2", "job-2"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    },
+
+    "job-3": {
+      "entryPointArguments": ["mid-cluster-2-one-task1-job3", "all", "1", "mid-cluster-2", "job-3"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    },
+
+    "job-4": {
+      "entryPointArguments": ["mid-cluster-2-one-task2-job4", "all", "2", "mid-cluster-2", "job-4"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    }
+  },
+  "mid-cluster-3":{
+    "job-1": {
+      "entryPointArguments": ["mid-cluster-3-one-task1-job1", "one", "1", "mid-cluster-3", "job-1"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    },
+
+    "job-2": {
+      "entryPointArguments": [ "mid-cluster-3-one-task2-job2", "one", "2", "mid-cluster-3", "job-2"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    },
+
+    "job-3": {
+      "entryPointArguments": ["mid-cluster-3-one-task1-job3", "all", "1", "mid-cluster-3", "job-3"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    },
+
+    "job-4": {
+      "entryPointArguments": ["mid-cluster-3-one-task2-job4", "all", "2", "mid-cluster-3", "job-4"],
+      "sparkSubmitParameters": "--driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 2"
+    }
+  }
+}
+

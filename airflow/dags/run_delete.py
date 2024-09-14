@@ -3,7 +3,7 @@ from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.utils.task_group import TaskGroup
 from datetime import datetime
-from callable import *
+from airflow.dags.callable.callable import *
 
 default_args = {
     'owner': 'airflow',
@@ -25,7 +25,7 @@ with DAG(dag_id='run_to_delete',
         port = ports[i]
         with TaskGroup(group_id=f'cluster_{cluster_name}') as cluster_group:
             def create_job_operators(cluster_name, port, job_id):
-                from callable import save_job_result
+                from airflow.dags.callable.callable import save_job_result
                 run_job = PythonOperator(
                     task_id=f'run_job_{job_id}',
                     python_callable=run_job_func,

@@ -73,14 +73,9 @@ with DAG(dag_id='run_job_one',
 
             # 반복적인 작업들을 함수로 처리
             run_job_1, wait_job_1, save_job_result_1 = create_job_operators(cluster_name, port, '1')
-            run_job_2, wait_job_2, save_job_result_2 = create_job_operators(cluster_name, port, '2')
-            run_job_3, wait_job_3, save_job_result_3 = create_job_operators(cluster_name, port, '3')
-            run_job_4, wait_job_4, save_job_result_4 = create_job_operators(cluster_name, port, '4')
+
 
             # 태스크 연결
             get_emr_virtual_cluster_id >> get_eks_arn >> get_kubeconfig >> port_forward >> \
             run_job_1 >> wait_job_1 >> save_job_result_1 >> \
-            run_job_2 >> wait_job_2 >> save_job_result_2 >> \
-            run_job_3 >> wait_job_3 >> save_job_result_3 >> \
-            run_job_4 >> wait_job_4 >> save_job_result_4 >> \
             port_forward_stop

@@ -14,6 +14,7 @@ with DAG(dag_id='create_one_cluster',
          description='create_multiple_clusters_dag',
          default_args=default_args,
          schedule_interval=None,
+         params={'tuning-id':1},
          catchup=False) as dag:
 
     for i in range(3):

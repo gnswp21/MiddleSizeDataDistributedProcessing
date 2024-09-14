@@ -17,6 +17,7 @@ with DAG(dag_id='run_job_one',
          description='run_job_dag',
          default_args=default_args,
          schedule_interval=None,
+         params={'tuning-id':1},
          catchup=False) as dag:
 
     def create_job_operators(cluster_name, port, job_id):

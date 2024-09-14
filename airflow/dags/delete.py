@@ -6,6 +6,7 @@ from airflow.operators.bash import BashOperator
 from datetime import datetime
 
 from airflow.operators.python import PythonOperator
+from utils.callables import *
 
 default_args = {
     'owner': 'airflow',
@@ -16,6 +17,7 @@ with DAG(dag_id='delete_cluster_multi',
          description='delete_cluster_dag',
          default_args=default_args,
          schedule_interval=None,
+         params={'tuning-id':1},
          catchup=False) as dag:
 
     for cluster_name in cluster_names:

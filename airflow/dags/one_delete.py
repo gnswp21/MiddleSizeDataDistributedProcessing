@@ -17,6 +17,7 @@ with DAG(dag_id='delete_cluster_one',
          description='delete_cluster_dag',
          default_args=default_args,
          schedule_interval=None,
+         params={'tuning-id':1},
          catchup=False) as dag:
 
     for cluster_name in cluster_names:

@@ -31,12 +31,11 @@ def delete_emr_virtual_cluster_func(**kwargs):
 def run_job_func(**kwargs):
     # Get Variables From XCom
     cluster_name = kwargs['cluster_name']
-    job_run_id = 'job-'+kwargs['id']
     virtual_cluster_id = get_virtual_cluster_id(**kwargs)
     tuning_id = kwargs['params'].get('tuning_id', 1)
 
     # tmp job_run_json
-    tmp_job_run_json_path = modify_job_run_json(tuning_id, cluster_name, job_run_id)
+    tmp_job_run_json_path = modify_job_run_json(tuning_id, cluster_name, kwargs['id'])
 
     # AWS CLI 명령어 실행
     args = f"aws emr-containers start-job-run "\
@@ -88,7 +87,7 @@ def wait_job_done(**kwargs):
     ti = kwargs['ti']
     cluster_name = ti['cluster_name']
     virtual_cluster_id = get_virtual_cluster_id(**kwargs)
-    job_id = get_job_id(**kwargs)
+    job_id = 'job_'+kwargs['id']
 
     pending_executor, total_executor = 0, 0
     while True:
@@ -155,18 +154,16 @@ def save_job_result(**kwargs):
 
     # Get Xcom Variables
     ti = kwargs['ti']
-    id = kwargs['id']
+    id = kwargs['job-id']
     port = kwargs['port']
 
     # Prometheus API 엔드포인트 설정
     prometheus_url = f'http://localhost:{port}/api/v1/query'
 
     cluster_name = kwargs['cluster_name']
-    prefix = 'cluster_' + cluster_name + '.'
-    run_job_id = 'run_job_' + id
+    prefix = get_prefix(**kwargs)
+    job_id = 'job_' + id
     wait_job_task_id = 'wait_job_' + id
-    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + 'get_emr_virtual_cluster_id', key='return_value')[
-        'virtual_cluster_id']
 
     # Spend Time, Convert strings to datetime objects
     created_at = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='createdAt')
@@ -177,7 +174,7 @@ def save_job_result(**kwargs):
     spend_time = int((dt2 - dt1).total_seconds())
 
     # DataFrame Cluster, Job Name
-    job_name = run_job_id
+    job_name = job_id
 
     # Avg CPU rate
     avg_cpu_usage_query = f'100 * (1 - avg(rate(node_cpu_seconds_total{{mode="idle"}}[{spend_time}s])))'
@@ -222,7 +219,8 @@ def save_job_result(**kwargs):
     # save results to s3
     s3 = boto3.client('s3')
     s3_bucket_name = 'middle-dataset'  # S3 버킷 이름
-    s3_key = f'results/{cluster_name}/{virtual_cluster_id}/resource_usage.csv'  # S3에 저장될 파일 경로
+
+    s3_key = f'results/{tuning-id}/resource_usage.csv'  # S3에 저장될 파일 경로
 
     new_row = pd.DataFrame({
         'Cluster Name': [cluster_name],

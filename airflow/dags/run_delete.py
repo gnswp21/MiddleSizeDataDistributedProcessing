@@ -17,6 +17,7 @@ with DAG(dag_id='run_to_delete',
          description='create_multiple_clusters_dag',
          default_args=default_args,
          schedule_interval=None,
+         params={'tuning-id': 1},
          catchup=False) as dag:
     for i in range(3):
         cluster_name = cluster_names[i]

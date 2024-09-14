@@ -66,6 +66,8 @@ with DAG(dag_id='create_run_delete_all',
                 task_id=f'add_kube_prometheus_stack_{cluster_name}',
                 bash_command=f"""
                 aws eks update-kubeconfig --name {cluster_name} --kubeconfig ./{cluster_name}_config
+                helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+                helm repo update
                 helm install monitoring-{cluster_name} prometheus-community/kube-prometheus-stack --kubeconfig ./{cluster_name}_config
                 """
             )

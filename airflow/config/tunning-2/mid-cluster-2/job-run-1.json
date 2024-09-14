@@ -1,0 +1,34 @@
+{
+  "name": "dev-job",
+  "executionRoleArn": "arn:aws:iam::691487686124:role/EMRContainers-JobExecutionRole",
+  "releaseLabel": "emr-6.5.0-latest",
+  "jobDriver": {
+    "sparkSubmitJobDriver": {
+      "entryPoint": "local:///etl/src/run.py",
+      "entryPointArguments": [
+        "mid-cluster-2-one-task1-job1", "one", "1", "mid-cluster-2", "job-1"
+      ],
+      "sparkSubmitParameters": "--py-files local:///etl/dependency_packages.zip --driver-cores 1 --driver-memory 4G --executor-cores 2 --executor-memory 4G --num-executors 4"
+    }
+  },
+  "configurationOverrides": {
+    "applicationConfiguration": [
+      {
+        "classification": "spark-defaults",
+        "properties": {
+          "spark.kubernetes.container.image": "691487686124.dkr.ecr.ap-northeast-2.amazonaws.com/emr6.5_mid_repo"
+        }
+      }
+    ],
+    "monitoringConfiguration": {
+      "persistentAppUI": "ENABLED",
+      "cloudWatchMonitoringConfiguration": {
+        "logGroupName": "middle-dataset-etl-log-group",
+        "logStreamNamePrefix": "middle-dataset-etl-log-group-prefix"
+      },
+      "s3MonitoringConfiguration": {
+        "logUri": "s3://middle-dataset-logging"
+      }
+    }
+  }
+}

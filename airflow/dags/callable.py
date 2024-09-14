@@ -93,15 +93,49 @@ def run_job_func(**kwargs):
 
 def wait_job_done(**kwargs):
     import time
+
     ti = kwargs['ti']
     cluster_name = kwargs['cluster_name']
     prefix = 'cluster_' + cluster_name + '.'
-    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + "get_emr_virtual_cluster_id", key='return_value')[
-        'virtual_cluster_id']
-    run_job_task_ids = 'run_job_' + kwargs['id']
-    job_id = ti.xcom_pull(task_ids=prefix + run_job_task_ids, key='return_value')['job_id']
+    virtual_cluster_id = ti.xcom_pull(task_ids=prefix + "get_emr_virtual_cluster_id", key='return_value')['virtual_cluster_id']
+    job_id = ti.xcom_pull(task_ids=prefix + 'run_job_' + kwargs['id'], key='return_value')['job_id']
     args = ['aws', 'emr-containers', 'describe-job-run', '--id', job_id, '--virtual-cluster-id', virtual_cluster_id]
+    # kubeconfig 파일 경로 설정
+    kubeconfig_path = f'/tmp/{cluster_name}_config'
+
+    # STATUS가 Pending인 파드 목록을 가져오기 위한 함수
+    def get_pending_pods(kubeconfig):
+        try:
+            result = subprocess.run(
+                ["kubectl", "get", "pods", "--kubeconfig", kubeconfig, "--field-selector=status.phase=Pending", "--no-headers", "-o", "custom-columns=:metadata.name"],
+                check=True, capture_output=True, text=True
+            )
+            return result.stdout.splitlines()  # 파드 이름을 리스트로 반환
+        except subprocess.CalledProcessError as e:
+            print(f"Error while getting pending pods: {e}")
+            return []
+
+    # Pending 상태인 파드에 대해 describe 명령어 실행 함수
+    def describe_pod(pod_name, kubeconfig):
+        try:
+            subprocess.run(
+                ["kubectl", "describe", "pod", pod_name, "--kubeconfig", kubeconfig],
+                check=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"Error while describing pod {pod_name}: {e}")
+
+
+
     while True:
+        pending_pods = get_pending_pods(kubeconfig_path)
+        if pending_pods:
+            for pod in pending_pods:
+                print(f"Describing pod: {pod}")
+                describe_pod(pod, kubeconfig_path)
+        else:
+            print("No pending pods found.")
+
         result = subprocess.run(args=args, capture_output=True, text=True)
         if result.stdout:
             print(result.stdout)
@@ -120,10 +154,7 @@ def wait_job_done(**kwargs):
             else:
                 time.sleep(60)
                 continue
-        if result.stderr:
-            print(result.stderr)
-            print('HERE 2')
-            return False
+
 
 
 def save_job_result(**kwargs):
@@ -207,12 +238,12 @@ def save_job_result(**kwargs):
     # Avg CPU rate
     avg_cpu_usage_query = f'100 * (1 - avg(rate(node_cpu_seconds_total{{mode="idle"}}[{spend_time}s])))'
     avg_cpu_usage = get_usage(avg_cpu_usage_query)
-    print(avg_cpu_usage, '%')
+    print('avg_cpu_usage' ,avg_cpu_usage, '%')
 
     # Max CPU Rate
     max_cpu_usage_query = f'100 * (1 - min(rate(node_cpu_seconds_total{{mode="idle"}}[{spend_time}s])))'
     max_cpu_usage = get_usage(max_cpu_usage_query)
-    print(max_cpu_usage, '%')
+    print('max_cpu_usage', max_cpu_usage, '%')
 
     # CPU USAGE
     node_num = pow(2, int(cluster_name[-1]))
@@ -220,25 +251,38 @@ def save_job_result(**kwargs):
     vcpu_usage = round(core_num * node_num * float(avg_cpu_usage) * int(spend_time), 4)
     print('vcpu_usage', vcpu_usage)
 
-    # Memory
-    memory_usage_query = f'sum(avg_over_time(container_memory_usage_bytes[{spend_time}s]))'
-    memory_usage = get_usage(memory_usage_query)
-    print(memory_usage, 'bytes')
+
 
     # Avg Memory Rate
     avg_memory_rate_usage_query = f'100 * (1 -avg(avg_over_time(node_memory_MemAvailable_bytes[{spend_time}]))/avg(node_memory_MemTotal_bytes))'
     avg_memory_rate_usage = get_usage(avg_memory_rate_usage_query)
-    print(avg_memory_rate_usage, '%')
+    print('avg_memory_rate_usage', avg_memory_rate_usage, '%')
 
     # Max Memory Rate
     max_memory_rate_usage_query = f'100 * (1 - min(min_over_time(node_memory_MemAvailable_bytes[{spend_time}s]))/avg(node_memory_MemTotal_bytes))'
     max_memory_rate_usage = get_usage(max_memory_rate_usage_query)
-    print(max_memory_rate_usage, '%')
+    print('max_memory_rate_usage', max_memory_rate_usage, '%')
+
+    # Memory
+    memory_usage_query = f'sum(avg_over_time(container_memory_usage_bytes[{spend_time}s]))'
+    memory_usage = get_usage(memory_usage_query)
+    print('memory_usage', memory_usage, 'bytes')
+
+    # Avg Memory Rate by pod
+    pod_avg_memory_rate_usage_query = f'100 * (1 -avg(avg_over_time(node_memory_MemAvailable_bytes[{spend_time}]))/avg(node_memory_MemTotal_bytes))'
+    pod_avg_memory_rate_usage = get_usage(pod_avg_memory_rate_usage_query)
+    print('pod_avg_memory_rate_usage', pod_avg_memory_rate_usage, '%')
+
+    # Max Memory Rate by pod
+    #'max_over_time((container_memory_usage_bytes{container!="",pod!=""} / container_spec_memory_limit_bytes{container!="",pod!=""}) * 100 [1h])'
+    pod_max_memory_rate_usage_query = f'max_over_time((container_memory_usage_bytes{{container!="",pod!=""}} / container_spec_memory_limit_bytes{{container!="",pod!=""}}) * 100 [{spend_time}s])'
+    pod_max_memory_rate_usage = get_usage(pod_max_memory_rate_usage_query)
+    print('pod_max_memory_rate_usage', pod_max_memory_rate_usage, '%')
 
     # Network IO
     network_IO_usage_query = f'sum(rate(node_network_transmit_bytes_total[{spend_time}s])) + sum(rate(node_network_receive_bytes_total[{spend_time}s]))'
     network_IO_usage = get_usage(network_IO_usage_query)
-    print(network_IO_usage, 'bytes')
+    print('network_IO_usage', network_IO_usage, 'bytes')
 
     # save results to s3
     s3 = boto3.client('s3')

@@ -15,26 +15,26 @@ def get_virtual_cluster_id(**kwargs):
     return virtual_cluster_id
 
 def get_prefix(**kwargs):
-    ti = kwargs['ti']
-    prefix = get_prefix(**kwargs)
-    return ti.xcom_pull(task_ids=prefix+'run_job_'+kwargs['id'], key='return_value')['job_id']
+    cluster_name = kwargs['cluster_name']
+    return 'cluster_'+cluster_name+'.'
 
 
 
 def get_tuning_id(**kwargs):
-    tuning_id = kwargs['param']['tuning-id']
+    ti = kwargs['ti']
+    tuning_id = ti.task.params.get('tuning-id', '1')
     return tuning_id
 
 
 def modify_job_run_json(tuning_id, cluster_name, id):
     # JSON 튜닝 컨피그 파일 로드
-    tuning_file_path = f'/opt/airflow/config/{tuning_id}.json'
+    tuning_file_path = f'/opt/airflow/config/tuning-{tuning_id}.json'
     with open(tuning_file_path, 'r') as file:
         tuning_config = json.load(file)
 
-    entryPointArguments = tuning_config[{cluster_name}][f'job-{id}']['entryPointArguments']
+    entryPointArguments = tuning_config[cluster_name][f'job-{id}']['entryPointArguments']
     sparkSubmitParameters = ('--py-files local:///etl/dependency_packages.zip ' +
-                             tuning_config[{cluster_name}][f'job-{id}']['sparkSubmitParameters'])
+                             tuning_config[cluster_name][f'job-{id}']['sparkSubmitParameters'])
 
     # JSON job run 파일 로드
     run_job_file_path = f'/opt/airflow/config/job-run.json'

@@ -9,11 +9,12 @@ from common import *
 def get_emr_virtual_cluster_id_by_bash(**kwargs):
     cluster_name = kwargs['cluster_name']
     emr_virtual_cluster_name = f'{cluster_name}_emr_virtual_cluster'
-    args = "aws emr-containers list-virtual-clusters --region ap-northeast-2"\
-           f" --query virtualClusters[?name==`{emr_virtual_cluster_name}` && state==`RUNNING`].id"
+    args = "aws emr-containers list-virtual-clusters --region ap-northeast-2 --query".split()
+    args.append(f"virtualClusters[?name==`{emr_virtual_cluster_name}` && state==`RUNNING`].id")
+    print(args)
 
     # run
-    result = subprocess.run(args=args, shell=True,  capture_output=True, text=True)
+    result = subprocess.run(args=args, capture_output=True, text=True)
     print_subprocess_result(result)
     if result.stdout:
         case = result.stdout.strip()
@@ -32,7 +33,7 @@ def run_job_func(**kwargs):
     # Get Variables From XCom
     cluster_name = kwargs['cluster_name']
     virtual_cluster_id = get_virtual_cluster_id(**kwargs)
-    tuning_id = kwargs['params'].get('tuning_id', 1)
+    tuning_id = get_tuning_id(**kwargs)
 
     # tmp job_run_json
     tmp_job_run_json_path = modify_job_run_json(tuning_id, cluster_name, kwargs['id'])
@@ -76,31 +77,42 @@ def wait_job_done(**kwargs):
     def check_eks_pending():
         args = f'kubectl --kubeconfig /tmp/{cluster_name}_config ' \
                'get pods -o custom-columns=NAME:.metadata.name | grep exec- | wc -l'
-        total_executor = subprocess.run(args=args, shell=True, capture_output=True, text=True)
+        total_executor_result = subprocess.run(args=args, shell=True, capture_output=True, text=True)
+        if total_executor_result.stdout:
+            total_executor = total_executor_result.stdout
+            print('total executor', total_executor)
 
         args = f'kubectl --kubeconfig /tmp/{cluster_name}_config ' \
                'get pods --field-selector=status.phase=Pending -o custom-columns=NAME:.metadata.name | grep exec- | wc -l'
-        pending_executor = subprocess.run(args=args, shell=True, capture_output=True, text=True)
+        pending_executor_results = subprocess.run(args=args, shell=True, capture_output=True, text=True)
+
+        if pending_executor_results.stdout:
+            pending_executor = pending_executor_results.stdout
+            print('pending executor', pending_executor)
 
         return pending_executor, total_executor
 
     ti = kwargs['ti']
-    cluster_name = ti['cluster_name']
+    cluster_name = kwargs['cluster_name']
     virtual_cluster_id = get_virtual_cluster_id(**kwargs)
     prefix = get_prefix(**kwargs)
     job_id = kwargs['id']
-    run_job_task_ids = f'run_job_{job_id}',
+    run_job_task_ids = f'run_job_{job_id}'
     aws_job_id = ti.xcom_pull(task_ids=prefix + run_job_task_ids, key='return_value')['aws_job_id']
 
     pending_executor, total_executor = 0, 0
     while True:
         state = check_job_run()
         if state =='RUNNING':
-            pending_executor, total_executor = check_eks_pending()
+            pe, te = check_eks_pending()
+            if (pe, te) != (0, 0):
+                pending_executor, total_executor = pe, te
             ti.xcom_push(key="pending_executor", value=pending_executor)
             ti.xcom_push(key="total_executor", value=total_executor)
         elif state=='COMPLETED':
-            return
+            return True
+        else: # state == 'STOPPED'
+            return False
         time.sleep(60)
 
 
@@ -157,7 +169,7 @@ def save_job_result(**kwargs):
 
     # Get Xcom Variables
     ti = kwargs['ti']
-    id = kwargs['job-id']
+    id = kwargs['id']
     port = kwargs['port']
 
     # Prometheus API 엔드포인트 설정
@@ -198,32 +210,35 @@ def save_job_result(**kwargs):
     # Memory
     memory_usage_query = f'sum(avg_over_time(container_memory_usage_bytes[{spend_time}s]))'
     memory_usage = get_usage(memory_usage_query)
-    print(memory_usage, 'bytes')
+    print('total memory usage', memory_usage, 'bytes')
 
     # Avg Memory Rate
     avg_memory_rate_usage_query = f'100 * (1 -avg(avg_over_time(node_memory_MemAvailable_bytes[{spend_time}]))/avg(node_memory_MemTotal_bytes))'
     avg_memory_rate_usage = get_usage(avg_memory_rate_usage_query)
-    print(avg_memory_rate_usage, '%')
+    print('avg memory rate', avg_memory_rate_usage, '%')
 
     # Max Memory Rate
     max_memory_rate_usage_query = f'100 * (1 - min(min_over_time(node_memory_MemAvailable_bytes[{spend_time}s]))/avg(node_memory_MemTotal_bytes))'
     max_memory_rate_usage = get_usage(max_memory_rate_usage_query)
-    print(max_memory_rate_usage, '%')
+    print('max memory rate', max_memory_rate_usage, '%')
 
     # Network IO
     network_IO_usage_query = f'sum(rate(node_network_transmit_bytes_total[{spend_time}s])) + sum(rate(node_network_receive_bytes_total[{spend_time}s]))'
     network_IO_usage = get_usage(network_IO_usage_query)
-    print(network_IO_usage, 'bytes')
+    print('network IO', network_IO_usage, 'bytes')
 
     # executor
     pending_executor = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='pending_executor')
     total_executor = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='total_executor')
+    print('pending executor', pending_executor)
+    print('total executor', total_executor)
 
     # save results to s3
     s3 = boto3.client('s3')
     s3_bucket_name = 'middle-dataset'  # S3 버킷 이름
+    tuning_id = get_tuning_id(**kwargs)
 
-    s3_key = f'results/{tuning-id}/resource_usage.csv'  # S3에 저장될 파일 경로
+    s3_key = f'results/tuning-{tuning_id}/resource_usage.csv'  # S3에 저장될 파일 경로
 
     new_row = pd.DataFrame({
         'Cluster Name': [cluster_name],

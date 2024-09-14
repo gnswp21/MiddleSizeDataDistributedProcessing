@@ -24,7 +24,6 @@ with DAG(dag_id='run_to_delete',
         port = ports[i]
         with TaskGroup(group_id=f'cluster_{cluster_name}') as cluster_group:
             def create_job_operators(cluster_name, port, job_id):
-                from callables import *
                 run_job = PythonOperator(
                     task_id=f'run_job_{job_id}',
                     python_callable=run_job_func,
@@ -37,13 +36,13 @@ with DAG(dag_id='run_to_delete',
                     op_kwargs={'id': job_id, 'cluster_name': cluster_name},
                     provide_context=True
                 )
-                save_job_result = PythonOperator(
+                save_job_result_task = PythonOperator(
                     task_id=f'save_job_result_{job_id}',
                     python_callable=save_job_result,
                     op_kwargs={'id': job_id, 'cluster_name': cluster_name, 'port': port},
                     provide_context=True
                 )
-                return run_job, wait_job, save_job_result
+                return run_job, wait_job, save_job_result_task
 
 
             get_emr_virtual_cluster_id = PythonOperator(

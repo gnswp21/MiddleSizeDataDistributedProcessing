@@ -18,9 +18,7 @@ with DAG(dag_id='run_job_multi',
          schedule_interval=None,
          params={'tuning-id':1},
          catchup=False) as dag:
-
     def create_job_operators(cluster_name, port, job_id):
-        from callables import save_job_result
         run_job = PythonOperator(
             task_id=f'run_job_{job_id}',
             python_callable=run_job_func,
@@ -33,13 +31,14 @@ with DAG(dag_id='run_job_multi',
             op_kwargs={'id': job_id, 'cluster_name': cluster_name},
             provide_context=True
         )
-        save_job_result = PythonOperator(
+        save_job_result_task = PythonOperator(
             task_id=f'save_job_result_{job_id}',
             python_callable=save_job_result,
+            params={'tuning-id', 1},
             op_kwargs={'id': job_id, 'cluster_name': cluster_name, 'port': port},
             provide_context=True
         )
-        return run_job, wait_job, save_job_result
+        return run_job, wait_job, save_job_result_task
 
     for i, (cluster_name, port) in enumerate(zip(cluster_names, ports)):
         with TaskGroup(group_id=f'cluster_{cluster_name}') as cluster_group:
@@ -71,7 +70,6 @@ with DAG(dag_id='run_job_multi',
                 bash_command=f"kill -9 $(lsof -t -i :{port})"
             )
 
-            # 반복적인 작업들을 함수로 처리
             run_job_1, wait_job_1, save_job_result_1 = create_job_operators(cluster_name, port, '1')
             run_job_2, wait_job_2, save_job_result_2 = create_job_operators(cluster_name, port, '2')
             run_job_3, wait_job_3, save_job_result_3 = create_job_operators(cluster_name, port, '3')

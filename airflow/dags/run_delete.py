@@ -2,8 +2,7 @@ from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.utils.task_group import TaskGroup
-from datetime import datetime
-from airflow.dags.callable.callable import *
+from utils.callables import *
 
 default_args = {
     'owner': 'airflow',

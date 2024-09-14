@@ -1,10 +1,6 @@
 from airflow.utils.task_group import TaskGroup
-
-from airflow.dags.callable.callable import *
 from airflow import DAG
 from airflow.operators.bash import BashOperator
-from datetime import datetime
-
 from airflow.operators.python import PythonOperator
 from utils.callables import *
 

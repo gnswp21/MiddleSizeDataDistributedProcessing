@@ -114,7 +114,7 @@ def wait_job_done(**kwargs):
         if state == 'SUBMITTED':
             time.sleep(10)
         elif state =='RUNNING':
-            r, p = check_eks_pending()
+            p, r = check_eks_pending()
             pending_executor = max(pending_executor, p)
             running_executor = max(running_executor, r)
             ti.xcom_push(key="pending_executor", value=pending_executor)

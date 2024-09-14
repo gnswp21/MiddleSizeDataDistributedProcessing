@@ -1,9 +1,9 @@
+from datetime import datetime
+from airflow.utils.task_group import TaskGroup
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator, ShortCircuitOperator
-from airflow.utils.task_group import TaskGroup
-from datetime import datetime
-from utils.callables import *
+from callables import *
 
 default_args = {
     'owner': 'airflow',

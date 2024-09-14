@@ -3,7 +3,7 @@ import subprocess
 import boto3
 from datetime import datetime
 import json
-from common import  *
+from common import *
 
 
 def get_emr_virtual_cluster_id_by_bash(**kwargs):

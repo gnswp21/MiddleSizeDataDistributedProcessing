@@ -34,7 +34,6 @@ with DAG(dag_id='run_job_multi',
         save_job_result_task = PythonOperator(
             task_id=f'save_job_result_{job_id}',
             python_callable=save_job_result,
-            params={'tuning-id', 1},
             op_kwargs={'id': job_id, 'cluster_name': cluster_name, 'port': port},
             provide_context=True
         )

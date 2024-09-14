@@ -82,7 +82,7 @@ def wait_job_done(**kwargs):
                'get pods --field-selector=status.phase=Running -o custom-columns=NAME:.metadata.name | grep exec- | wc -l'
         running_executor_result = subprocess.run(args=args, shell=True, capture_output=True, text=True)
         if running_executor_result.stdout:
-            running_executor = running_executor_result.stdout
+            running_executor = int(running_executor_result.stdout)
             print('running executor ', running_executor)
         if running_executor_result.stderr:
             print(running_executor_result.stdout)
@@ -92,7 +92,7 @@ def wait_job_done(**kwargs):
         pending_executor_results = subprocess.run(args=args, shell=True, capture_output=True, text=True)
 
         if pending_executor_results.stdout:
-            pending_executor = pending_executor_results.stdout
+            pending_executor = int(pending_executor_results.stdout)
             print('pending executor', pending_executor)
 
         if pending_executor_results.stderr:

@@ -61,6 +61,8 @@ def wait_job_done(**kwargs):
             print(result.stdout)
             data = json.loads(result.stdout)
             state = data.get('jobRun').get('state')
+            if state == "SUBMITTED":
+                return "SUBMITTED"
             if state == "FAILED" or state == "CANCELLED":
                 return "STOPPED"
             elif state == "COMPLETED":
@@ -74,13 +76,16 @@ def wait_job_done(**kwargs):
         if result.stderr:
             print(result.stderr)
             return "ERROR"
+
     def check_eks_pending():
         args = f'kubectl --kubeconfig /tmp/{cluster_name}_config ' \
-               'get pods -o custom-columns=NAME:.metadata.name | grep exec- | wc -l'
-        total_executor_result = subprocess.run(args=args, shell=True, capture_output=True, text=True)
-        if total_executor_result.stdout:
-            total_executor = total_executor_result.stdout
-            print('total executor', total_executor)
+               'get pods --field-selector=status.phase=Running -o custom-columns=NAME:.metadata.name | grep exec- | wc -l'
+        running_executor_result = subprocess.run(args=args, shell=True, capture_output=True, text=True)
+        if running_executor_result.stdout:
+            running_executor = running_executor_result.stdout
+            print('running executor ', running_executor)
+        if running_executor_result.stderr:
+            print(running_executor_result.stdout)
 
         args = f'kubectl --kubeconfig /tmp/{cluster_name}_config ' \
                'get pods --field-selector=status.phase=Pending -o custom-columns=NAME:.metadata.name | grep exec- | wc -l'
@@ -90,7 +95,10 @@ def wait_job_done(**kwargs):
             pending_executor = pending_executor_results.stdout
             print('pending executor', pending_executor)
 
-        return pending_executor, total_executor
+        if pending_executor_results.stderr:
+            print(pending_executor_results.stdout)
+
+        return pending_executor, running_executor
 
     ti = kwargs['ti']
     cluster_name = kwargs['cluster_name']
@@ -100,20 +108,23 @@ def wait_job_done(**kwargs):
     run_job_task_ids = f'run_job_{job_id}'
     aws_job_id = ti.xcom_pull(task_ids=prefix + run_job_task_ids, key='return_value')['aws_job_id']
 
-    pending_executor, total_executor = 0, 0
+    running_executor, pending_executor = 0, 0
     while True:
         state = check_job_run()
+        if state == 'SUBMITTED':
+            time.sleep(10)
         if state =='RUNNING':
-            pe, te = check_eks_pending()
-            if (pe, te) != (0, 0):
-                pending_executor, total_executor = pe, te
+            r, p =  check_eks_pending()
+            pending_executor = max(pending_executor, p)
+            running_executor = max(running_executor, r)
             ti.xcom_push(key="pending_executor", value=pending_executor)
-            ti.xcom_push(key="total_executor", value=total_executor)
+            ti.xcom_push(key="running_executor", value=running_executor)
+            time.sleep(60)
         elif state=='COMPLETED':
             return True
         else: # state == 'STOPPED'
             return False
-        time.sleep(60)
+
 
 
 def save_job_result(**kwargs):
@@ -229,9 +240,9 @@ def save_job_result(**kwargs):
 
     # executor
     pending_executor = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='pending_executor')
-    total_executor = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='total_executor')
+    running_executor = ti.xcom_pull(task_ids=prefix + wait_job_task_id, key='running_executor')
     print('pending executor', pending_executor)
-    print('total executor', total_executor)
+    print('running executor', running_executor)
 
     # save results to s3
     s3 = boto3.client('s3')

@@ -9,20 +9,11 @@ docker logs -f extract
 docker compose -f ./process_dev/docker-compose.yml down
 ```
 
-
-# dev
-```commandline
-docker build -t dev -f ./process_dev/Dockerfile .
-docker compose -f ./process_dev/docker-compose.yml up -d
-docker logs -f dev
-docker compose -f ./process_dev/docker-compose.yml down
-```
-
 # airflow
 ```commandline
-docker compose -f ./airflow/docker-compose.yml up --build
+docker compose -f ./airflow/docker-compose.yml up -d --build
 ```
-# Build Dockerfile
+# Build Dockerfile & Send to dkr.ecr
 ```bash
 # For docker build login seoul dcr
 aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 996579266876.dkr.ecr.ap-northeast-2.amazonaws.com
@@ -33,9 +24,12 @@ docker tag emr6.5_mid 691487686124.dkr.ecr.ap-northeast-2.amazonaws.com/emr6.5_m
 docker push 691487686124.dkr.ecr.ap-northeast-2.amazonaws.com/emr6.5_mid_repo
 ```
 
-```commandline
-aws emr-containers cancel-job-run --id 000000034f75m64kr7h --virtual-cluster-id 5ojfi4uzk90m3sm33xzrddgc0
-```
+# Airflow Dag 실행
+에어플로우 웹 유아이에 접속,
+create_run_delete_all DAG 실행, 원하는 튜닝버전을 지정하기 위한 파라미터 입력
+결과 s3 통해 확인
+
+
 
 
 # 푸시파일 to airflow
@@ -46,22 +40,3 @@ pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/dags/callable
 pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/dags/common.py ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/dags
 ```
 
-# .env
-##
-
-## 깃 컨벤션
-| Tag Name         | Description                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| Feat             | 새로운 기능을 추가                                                                            |
-| Fix              | 버그 수정                                                                                     |
-| Design           | CSS 등 사용자 UI 디자인 변경                                                                  |
-| !BREAKING CHANGE | 커다란 API 변경의 경우                                                                        |
-| !HOTFIX          | 급하게 치명적인 버그를 고쳐야하는 경우                                                        |
-| Style            | 코드 포맷 변경, 세미 콜론 누락, 코드 수정이 없는 경우                                         |
-| Refactor         | 프로덕션 코드 리팩토링                                                                        |
-| Comment          | 필요한 주석 추가 및 변경                                                                      |
-| Docs             | 문서 수정                                                                                     |
-| Test             | 테스트 코드, 리펙토링 테스트 코드 추가, Production Code(실제로 사용하는 코드) 변경 없음       |
-| Chore            | 빌드 업무 수정, 패키지 매니저 수정, 패키지 관리자 구성 등 업데이트, Production Code 변경 없음 |
-| Rename           | 파일 혹은 폴더명을 수정하거나 옮기는 작업만인 경우                                            |
-| Remove           | 파일을 삭제하는 작업만 수행한 경우                                                            |

@@ -48,13 +48,13 @@ def run_job_func(**kwargs):
     # Check Result
     if result.stdout:
         data = json.loads(result.stdout)
-        return {'job_id': data['id']}
+        return {'aws_job_id': data['id']}
 
 
 def wait_job_done(**kwargs):
     import time
     def check_job_run():
-        args = ['aws', 'emr-containers', 'describe-job-run', '--id', job_id, '--virtual-cluster-id', virtual_cluster_id]
+        args = ['aws', 'emr-containers', 'describe-job-run', '--id', aws_job_id, '--virtual-cluster-id', virtual_cluster_id]
         result = subprocess.run(args=args, capture_output=True, text=True)
         if result.stdout:
             print(result.stdout)
@@ -87,7 +87,10 @@ def wait_job_done(**kwargs):
     ti = kwargs['ti']
     cluster_name = ti['cluster_name']
     virtual_cluster_id = get_virtual_cluster_id(**kwargs)
-    job_id = 'job_'+kwargs['id']
+    prefix = get_prefix(**kwargs)
+    job_id = kwargs['id']
+    run_job_task_ids = f'run_job_{job_id}',
+    aws_job_id = ti.xcom_pull(task_ids=prefix + run_job_task_ids, key='return_value')['aws_job_id']
 
     pending_executor, total_executor = 0, 0
     while True:

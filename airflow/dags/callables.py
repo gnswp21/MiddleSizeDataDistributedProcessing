@@ -113,8 +113,7 @@ def wait_job_done(**kwargs):
         state = check_job_run()
         if state == 'SUBMITTED':
             time.sleep(10)
-        if state =='RUNNING':
-
+        elif state =='RUNNING':
             r, p = check_eks_pending()
             pending_executor = max(pending_executor, p)
             running_executor = max(running_executor, r)
@@ -124,7 +123,7 @@ def wait_job_done(**kwargs):
                 time.sleep(10)
             else:
                 time.sleep(60)
-        elif state=='COMPLETED':
+        elif state =='COMPLETED':
             return True
         else: # state == 'STOPPED'
             return False
@@ -267,7 +266,7 @@ def save_job_result(**kwargs):
         'Total Memory Usage (Byte)': [memory_usage],
         'Network IO (Byte)': [network_IO_usage],
         'Pending Executor': [pending_executor],
-        'Total Executor': [total_executor]
+        'Running Executor': [running_executor]
     })
 
     # S3에 파일이 존재하는지 확인

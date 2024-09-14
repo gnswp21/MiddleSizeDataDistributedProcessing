@@ -19,7 +19,7 @@ with DAG(dag_id='create_one_cluster',
          params={'tuning-id':1},
          catchup=False) as dag:
 
-    for i in range(3):
+    for i in range(len(cluster_names)):
         cluster_name = cluster_names[i]
         node = nodes[i]
         with TaskGroup(group_id=f'cluster_{cluster_name}') as cluster_group:

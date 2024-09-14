@@ -20,7 +20,7 @@ with DAG(dag_id='run_job_one',
          catchup=False) as dag:
 
     def create_job_operators(cluster_name, port, job_id):
-        from utils.callables import save_job_result
+        from callables import save_job_result
         run_job = PythonOperator(
             task_id=f'run_job_{job_id}',
             python_callable=run_job_func,

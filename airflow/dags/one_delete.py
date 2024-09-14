@@ -8,7 +8,8 @@ from callables import *
 default_args = {
     'owner': 'airflow',
 }
-cluster_names = ['mid-cluster-1', 'mid-cluster-2', 'mid-cluster-3']
+cluster_names = ['mid-cluster-1']
+
 with DAG(dag_id='delete_cluster_one',
          description='delete_cluster_dag',
          default_args=default_args,
@@ -21,7 +22,7 @@ with DAG(dag_id='delete_cluster_one',
             get_emr_virtual_cluster_id = PythonOperator(
                 task_id='get_emr_virtual_cluster_id',
                 python_callable=get_emr_virtual_cluster_id_by_bash,
-                op_kwargs={'cluster_name':cluster_name}
+                op_kwargs={'cluster_name': cluster_name}
             )
             # Run EMR on EKS Job
             delete_emr_virtual_cluster = PythonOperator(

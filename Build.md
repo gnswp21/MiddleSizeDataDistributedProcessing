@@ -34,7 +34,7 @@ create_run_delete_all DAG 실행, 원하는 튜닝버전을 지정하기 위한 
 
 # 푸시파일 to airflow
 ```commandline
-pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/config/tuning-2.json ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/config
+pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/config/tuning-1.json ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/config
 pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/dags/create_run_delete_all.py ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/dags
 pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/dags/callables.py ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/dags
 pscp -P 3323 -i C:\Users\family\Projects\ec2-putty-key.ppk airflow/dags/common.py ubuntu@13.209.6.57:/home/ubuntu/MiddleSizeDataDistributedProcessing/airflow/dags

@@ -119,10 +119,10 @@ def wait_job_done(**kwargs):
             running_executor = max(running_executor, r)
             ti.xcom_push(key="pending_executor", value=pending_executor)
             ti.xcom_push(key="running_executor", value=running_executor)
-            if (running_executor, pending_executor) == (0, 0):
-                time.sleep(10)
-            else:
+            if running_executor != 0 and pending_executor == 0:
                 time.sleep(60)
+            else:
+                time.sleep(10)
         elif state =='COMPLETED':
             return True
         else: # state == 'STOPPED'
@@ -252,7 +252,7 @@ def save_job_result(**kwargs):
     s3_bucket_name = 'middle-dataset'  # S3 버킷 이름
     tuning_id = get_tuning_id(**kwargs)
 
-    s3_key = f'results/tuning-{tuning_id}/resource_usage.csv'  # S3에 저장될 파일 경로
+    s3_key = f'results/tuning-{tuning_id}/{cluster_name}_resource_usage.csv'  # S3에 저장될 파일 경로
 
     new_row = pd.DataFrame({
         'Cluster Name': [cluster_name],

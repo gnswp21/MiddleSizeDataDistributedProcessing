@@ -13,7 +13,7 @@
 
 
 #  구조
-![architecture](architecture.jpg).
+![MiddleSizeData](MiddleSizeData.png).
 ## 데이터셋
 https://www.kaggle.com/datasets/bwandowando/strong-passwords-in-rockyou2024-txt
 
@@ -54,6 +54,7 @@ History: https://en.wikipedia.org/wiki/RockYou
 1. 50기가 데이터에 적합한 eks 클러스터 구성, 스파크 리소스 분배구성을 찾을 수 있었습니다.
 2. Emr on Eks를 통해 분산처리를 통해 진행했기에 빠른 실행,  실제 호스트머신의 스펙에 관계 없이 사용, 병렬적으로 실행, 간단한 설치와 삭제가 가능합니다.
 3. Airflow로 eks 설치부터 실행,삭제까지 관리하므로 end to end이면서 동시에 확장적인 설계가 가능했습니다.
+4. 한개의 json 파일 하나로 튜닝 버전 관리
 ![Dags](dags.png)
 ![run-multi-dag](run_multi.png)
 

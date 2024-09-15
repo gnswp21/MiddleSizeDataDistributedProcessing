@@ -110,6 +110,9 @@ History: https://en.wikipedia.org/wiki/RockYou
 - run job Dag
 <img src="run_multi.png" alt="Image description" width="100%">
 
+## 기여도
+모든 기획과 개발을 혼자 진행한 개인 프로젝트입니다.
+
 # 프로젝트 구현 과정
 
 1. **프로젝트 기획** `[2024-09-02]`

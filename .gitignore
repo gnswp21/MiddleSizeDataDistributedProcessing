@@ -1,2 +1,13 @@
 kaggle.json
 .venv
+data
+data/best_student_performance_model.pkl
+data/st.ipynb
+data/student_performance.csv
+.env
+.vs/slnx.sqlite
+.vs/VSWorkspaceState.json
+.vs/MiddleSizeDataDistributedProcessing/FileContentIndex/fbb64b48-7f66-4c47-9fd0-549e6420e3ee.vsidx
+.vs/MiddleSizeDataDistributedProcessing/v17/.wsuo
+.vs/MiddleSizeDataDistributedProcessing/v17/DocumentLayout.backup.json
+.vs/MiddleSizeDataDistributedProcessing/v17/DocumentLayout.json

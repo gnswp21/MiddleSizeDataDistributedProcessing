@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  dev:
+    image: dev
+    container_name: dev
+    command: >
+        spark-submit 
+        --py-files /etl/dependency_packages.zip
+        --conf spark.hadoop.fs.s3a.access.key=${SPARK_HADOOP_FS_S3A_ACCESS_KEY}
+        --conf spark.hadoop.fs.s3a.secret.key=${SPARK_HADOOP_FS_S3A_SECRET_KEY}
+        src/run.py
+        dev-job-1 one 2 dev-cluster job-dev
+
+    ports:
+      - "4040:4040"
+
+    environment:
+      SPARK_HADOOP_FS_S3A_ACCESS_KEY: ${SPARK_HADOOP_FS_S3A_ACCESS_KEY}
+      SPARK_HADOOP_FS_S3A_SECRET_KEY: ${SPARK_HADOOP_FS_S3A_SECRET_KEY}

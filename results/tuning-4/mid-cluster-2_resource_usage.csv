@@ -1,0 +1,5 @@
+Cluster Name,Job Name,Spend Time (s),AVG CPU (%),MAX CPU (%),Total vCPU Usage (s),AVG Memory Rate (%),MAX Memory Rate (%),Total Memory Usage (Byte),Network IO (Byte),Pending Executor,Running Executor
+mid-cluster-2,job_1,215,26.7136,42.9444,91894.784,8.2363,19.1325,10444348542.781,190859542.9923,4,2
+mid-cluster-2,job_2,697,37.695,80.3318,420374.64,13.7291,20.6898,14334034737.6388,41995867.4826,3,2
+mid-cluster-2,job_3,636,35.5176,73.4,361427.0976,13.2021,19.711,13064246858.776,388559299.0557,2,2
+mid-cluster-2,job_4,5108,44.0045,87.5351,3596399.776,15.2677,21.9044,15483895625.9754,46408782.0131,2,2

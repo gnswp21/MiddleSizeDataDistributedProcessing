@@ -77,12 +77,12 @@
 ### 스파크 리소스 분배 튜닝
 [튜닝 구성 - tunning-n.json](airflow/config)
 
-| Tuning     | Driver Core, Memory | Executor Core, Memory, Count        |
-|------------|---------------------|-------------------------------------|
-| Tuning-1   | 1, 4                | 2, 4, Node Count                   |
-| Tuning-2   | 1, 4                | 2, 2, Node Count                   |
-| Tuning-3   | 1, 4                | 2, 2, Node Count * 2               |
-| Tuning-4   | 1, 4                | 3, 4, Node Count                   |
+| Tuning    | Driver Core | Driver Memory | Executor Core | Executor Memory | Executor Count   |
+|-----------|-------------|---------------|---------------|----------------|------------------|
+| Tuning-1  | 1           | 4             | 2             | 4              | Node Count       |
+| Tuning-2  | 1           | 4             | 2             | 2              | Node Count       |
+| Tuning-3  | 1           | 4             | 2             | 2              | Node Count * 2   |
+| Tuning-4  | 1           | 4             | 3             | 4              | Node Count       |
 
 
 ### 튜닝 결과

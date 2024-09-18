@@ -57,7 +57,7 @@
 
 ### 데이터셋
 
-[Strong Passwords in Rockyou2024.txt](https://www.kaggle.com/datasets/bwandowando/strong-passwords-in-rockyou2024-txt)
+[Strong Passwords in Rockyou2024.txt](https://www.kaggle.com/datasets/bwandowando/common-password-list-rockyou2024-txt)
 
 히스토리: [RockYou 위키피디아](https://en.wikipedia.org/wiki/RockYou)
 
